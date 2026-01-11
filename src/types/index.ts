@@ -22,6 +22,9 @@ export interface RegisterData {
   name: string;
   email: string;
   password: string;
+  department:string;
+  year:number;
+  registerNumber:string;
 }
 
 // Topic & Question Types

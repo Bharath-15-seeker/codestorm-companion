@@ -13,6 +13,10 @@ const RegisterPage = () => {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [department, setDepartment] = useState('');
+const [year, setYear] = useState<number | ''>('');
+const [registerNumber, setRegisterNumber] = useState('');
+
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -44,19 +48,31 @@ const RegisterPage = () => {
     setIsLoading(true);
 
     try {
-      await register({ name, email, password });
-      toast({
-        title: "Welcome to CodeStorm!",
-        description: "Your account has been created successfully.",
-      });
-      navigate('/dashboard');
+    await register({
+  name,
+  email,
+  password,
+  department,
+  year: Number(year),
+  registerNumber,
+});
+
+toast({
+  title: "Registration successful",
+  description: "Please login to continue",
+});
+
+navigate("/login");
+
+
     } catch (error) {
-      toast({
-        title: "Registration failed",
-        description: "Something went wrong. Please try again.",
-        variant: "destructive",
-      });
-    } finally {
+  toast({
+    title: "Registration failed",
+    description: "Something went wrong. Please try again.",
+    variant: "destructive",
+  });
+}
+ finally {
       setIsLoading(false);
     }
   };
@@ -113,6 +129,40 @@ const RegisterPage = () => {
                 className="h-12"
               />
             </div>
+
+          <div className="space-y-2">
+  <Label htmlFor="registerNumber">Register Number</Label>
+  <Input
+    id="registerNumber"
+    value={registerNumber}
+    onChange={(e) => setRegisterNumber(e.target.value)}
+    required
+    className="h-12"
+  />
+</div>
+
+<div className="space-y-2">
+  <Label htmlFor="department">Department</Label>
+  <Input
+    id="department"
+    value={department}
+    onChange={(e) => setDepartment(e.target.value)}
+    required
+    className="h-12"
+  />
+</div>
+
+<div className="space-y-2">
+  <Label htmlFor="year">Year</Label>
+  <Input
+    id="year"
+    type="number"
+    value={year}
+    onChange={(e) => setYear(Number(e.target.value))}
+    required
+    className="h-12"
+  />
+</div>
 
             <div className="space-y-2">
               <Label htmlFor="password">Password</Label>

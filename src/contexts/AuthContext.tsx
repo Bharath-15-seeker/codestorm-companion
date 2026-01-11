@@ -49,8 +49,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const token = localStorage.getItem('authToken');
     
     if (storedUser && token) {
-      setUser(JSON.parse(storedUser));
-    }
+  try {
+    setUser(JSON.parse(storedUser));
+  } catch (e) {
+    console.error("Invalid user data in localStorage", e);
+    localStorage.removeItem("user");
+    localStorage.removeItem("authToken");
+    setUser(null);
+  }
+}
+
     setIsLoading(false);
   }, []);
 
@@ -70,9 +78,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       } else {
         // Try real API
         const response = await authService.login(credentials);
-        localStorage.setItem('authToken', response.token);
-        localStorage.setItem('user', JSON.stringify(response.user));
-        setUser(response.user);
+
+  // ✅ SAFETY CHECK (PASTE THIS HERE)
+  if (!response?.token || !response?.user) {
+    throw new Error("Invalid login response");
+  }
+
+  localStorage.setItem("authToken", response.token);
+  localStorage.setItem("user", JSON.stringify(response.user));
+  setUser(response.user);
       }
     } catch (error) {
       throw new Error('Invalid email or password');
@@ -82,30 +96,26 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, []);
 
   const register = useCallback(async (data: RegisterData) => {
-    setIsLoading(true);
-    try {
-      // Mock registration for demo
-      const newUser: User = {
-        id: Date.now(),
-        email: data.email,
-        name: data.name,
-        role: 'STUDENT',
-      };
-      
-      localStorage.setItem('authToken', 'mock-jwt-token');
-      localStorage.setItem('user', JSON.stringify(newUser));
-      setUser(newUser);
-    } catch (error) {
-      throw new Error('Registration failed. Please try again.');
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
+  setIsLoading(true);
+  try {
+    await authService.register(data); // 🔥 no token expected
+  } catch (error) {
+    console.error("Register error:", error);
+    throw new Error("Registration failed. Please try again.");
+  } finally {
+    setIsLoading(false);
+  }
+}, []);
 
-  const logout = useCallback(() => {
-    authService.logout();
-    setUser(null);
-  }, []);
+
+
+ const logout = useCallback(() => {
+  localStorage.removeItem("user");
+  localStorage.removeItem("authToken");
+  authService.logout();
+  setUser(null);
+}, []);
+
 
   return (
     <AuthContext.Provider

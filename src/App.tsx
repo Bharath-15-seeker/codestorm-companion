@@ -23,6 +23,11 @@ import StudentDashboard from "./pages/student/StudentDashboard";
 
 // Components
 import ProtectedRoute from "./components/ProtectedRoute";
+import CodingSheet from "./pages/student/CodingSheet";
+import AptitudeSheet from"./pages/student/AptitudeSheet";
+import Leaderboard from "./pages/student/LeaderBoard";
+import CareerTracks from "./pages/student/CareerTracks";
+import Events from "./pages/student/Events";
 
 const queryClient = new QueryClient();
 
@@ -56,21 +61,22 @@ const App = () => (
             </Route>
 
             {/* Student Routes */}
-            <Route
-              path="/dashboard"
-              element={
-                <ProtectedRoute allowedRoles={['STUDENT']}>
-                  <StudentLayout />
-                </ProtectedRoute>
-              }
-            >
-              <Route index element={<StudentDashboard />} />
-              <Route path="coding" element={<StudentDashboard />} />
-              <Route path="aptitude" element={<StudentDashboard />} />
-              <Route path="leaderboard" element={<StudentDashboard />} />
-              <Route path="events" element={<StudentDashboard />} />
-              <Route path="career-tracks" element={<StudentDashboard />} />
-            </Route>
+           <Route
+  path="/dashboard"
+  element={
+    <ProtectedRoute allowedRoles={['STUDENT']}>
+      <StudentLayout />
+    </ProtectedRoute>
+  }
+>
+  <Route index element={<StudentDashboard />} />
+  <Route path="coding" element={<CodingSheet />} />
+  <Route path="aptitude" element={<AptitudeSheet />} />
+  <Route path="leaderboard" element={<Leaderboard />} />
+  <Route path="events" element={<Events />} />
+  <Route path="career-tracks" element={<CareerTracks />} />
+</Route>
+
 
             {/* Catch-all */}
             <Route path="*" element={<NotFound />} />
