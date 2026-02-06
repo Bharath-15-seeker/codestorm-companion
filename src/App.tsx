@@ -25,8 +25,9 @@ import StudentDashboard from "./pages/student/StudentDashboard";
 import ProtectedRoute from "./components/ProtectedRoute";
 import CodingSheet from "./pages/student/CodingSheet";
 import AptitudeSheet from"./pages/student/AptitudeSheet";
-import Leaderboard from "./pages/student/LeaderBoard";
+//import Leaderboard from "./pages/student/LeaderBoard";
 import CareerTracks from "./pages/student/CareerTracks";
+import CareerResources from "./pages/student/CareerResources";
 import Events from "./pages/student/Events";
 
 const queryClient = new QueryClient();
@@ -72,9 +73,11 @@ const App = () => (
   <Route index element={<StudentDashboard />} />
   <Route path="coding" element={<CodingSheet />} />
   <Route path="aptitude" element={<AptitudeSheet />} />
-  <Route path="leaderboard" element={<Leaderboard />} />
+ 
   <Route path="events" element={<Events />} />
   <Route path="career-tracks" element={<CareerTracks />} />
+<Route path="career-tracks/:id" element={<CareerResources />} />
+
 </Route>
 
 
