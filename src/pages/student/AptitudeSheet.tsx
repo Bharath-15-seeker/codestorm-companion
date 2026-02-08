@@ -1,233 +1,257 @@
 import { useEffect, useState } from "react";
-import axios from "axios";
+import { studentService } from "@/services/api";
+
+// shadcn UI
 import {
   Accordion,
   AccordionContent,
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
-import { Card, CardContent } from "@/components/ui/card";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
-import { Brain } from "lucide-react";
-import clsx from "clsx";
 
-/* ---------- HELPER ---------- */
-const mapCorrectOption = (
-  opt: "A" | "B" | "C" | "D"
-): "optionA" | "optionB" | "optionC" | "optionD" =>
-  `option${opt}` as any;
+// icons
+import { ExternalLink } from "lucide-react";
 
-/* ---------- TYPES ---------- */
-interface Question {
+/* =======================
+   UI DTO TYPES
+   ======================= */
+
+interface AptitudeQuestion {
   id: number;
-  title: string;
-  optionA: string;
-  optionB: string;
-  optionC: string;
-  optionD: string;
-  difficulty: string;
-  correctOption: "A" | "B" | "C" | "D";
+  question: string;
+  difficulty: "EASY" | "MEDIUM" | "HARD";
+  solved?: boolean;
 }
 
-interface SubTopic {
+interface AptitudeSubTopic {
   id: number;
   name: string;
-  questions: Question[];
+  questions: AptitudeQuestion[];
 }
 
-interface Topic {
+interface AptitudeTopic {
   id: number;
   name: string;
-  subTopics: SubTopic[];
+  subTopics: AptitudeSubTopic[];
 }
 
-/* ---------- COMPONENT ---------- */
-export default function AptitudeSheet() {
-  const [topics, setTopics] = useState<Topic[]>([]);
-  const [answers, setAnswers] = useState<
-    Record<number, { selected: string; locked: boolean }>
-  >({});
+/* =======================
+   Helpers
+   ======================= */
+
+const difficultyVariant = (difficulty: string) => {
+  switch (difficulty) {
+    case "EASY":
+      return "secondary";
+    case "MEDIUM":
+      return "outline";
+    case "HARD":
+      return "destructive";
+    default:
+      return "default";
+  }
+};
+
+/* =======================
+   Component
+   ======================= */
+
+const AptitudeSheet = () => {
+  const [topics, setTopics] = useState<AptitudeTopic[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    axios
-      .get("http://localhost:8081/api/sheets/aptitude")
-      .then((res) => setTopics(res.data.topics))
-      .catch(console.error);
+    const fetchSheet = async () => {
+      try {
+        const data = await studentService.getAptitudeSheet();
+
+        // 🔥 Normalize backend → UI
+        const mappedTopics: AptitudeTopic[] = (data.topics || []).map(
+          (t: any) => ({
+            id: t.id,
+            name: t.name,
+            subTopics: (t.subTopics || []).map((s: any) => ({
+              id: s.id,
+              name: s.name,
+              questions: (s.questions || []).map((q: any) => ({
+                id: q.id,
+                question: q.question,
+                difficulty: q.difficulty,
+                solved: q.solved, // 👈 IMPORTANT
+              })),
+            })),
+          })
+        );
+
+        setTopics(mappedTopics);
+      } catch (error) {
+        console.error("Failed to load aptitude sheet", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchSheet();
   }, []);
 
-  const handleAnswer = (qId: number, option: string) => {
-    setAnswers((prev) => {
-      if (prev[qId]?.locked) return prev;
-      return {
-        ...prev,
-        [qId]: { selected: option, locked: true },
-      };
-    });
+  /* =======================
+     Progress Toggle
+     ======================= */
+
+  const toggleSolved = async (questionId: number, solved: boolean) => {
+    // Optimistic UI update
+    setTopics((prev) =>
+      prev.map((topic) => ({
+        ...topic,
+        subTopics: topic.subTopics.map((sub) => ({
+          ...sub,
+          questions: sub.questions.map((q) =>
+            q.id === questionId ? { ...q, solved } : q
+          ),
+        })),
+      }))
+    );
+
+    try {
+      await studentService.updateQuestionProgress(questionId, solved);
+    } catch (error) {
+      console.error("Failed to update aptitude progress", error);
+
+      // Revert on failure
+      setTopics((prev) =>
+        prev.map((topic) => ({
+          ...topic,
+          subTopics: topic.subTopics.map((sub) => ({
+            ...sub,
+            questions: sub.questions.map((q) =>
+              q.id === questionId ? { ...q, solved: !solved } : q
+            ),
+          })),
+        }))
+      );
+    }
   };
 
-  const resetQuestion = (qId: number) => {
-    setAnswers((prev) => {
-      const copy = { ...prev };
-      delete copy[qId];
-      return copy;
-    });
-  };
+  /* =======================
+     UI
+     ======================= */
+
+  if (loading) {
+    return (
+      <div className="p-6 text-muted-foreground">
+        Loading aptitude sheet...
+      </div>
+    );
+  }
 
   return (
     <div className="p-6 space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-bold">Aptitude Sheet</h1>
+        <h1 className="text-2xl font-bold text-foreground">
+          Aptitude Sheet
+        </h1>
         <p className="text-muted-foreground">
-          Improve logical reasoning and quantitative aptitude
+          Practice aptitude questions and track your progress
         </p>
       </div>
 
-      {/* ---------- TOPIC ACCORDION ---------- */}
-      <Accordion type="single" collapsible className="space-y-4">
+      {/* =======================
+          TOPIC ACCORDION
+         ======================= */}
+      <Accordion type="multiple" className="space-y-4">
         {topics.map((topic) => (
           <AccordionItem
             key={topic.id}
             value={`topic-${topic.id}`}
+            className="border rounded-xl px-4"
           >
+            {/* Topic */}
             <AccordionTrigger className="text-lg font-semibold">
               {topic.name}
             </AccordionTrigger>
 
-            <AccordionContent>
-              {/* ---------- SUBTOPIC ACCORDION ---------- */}
-              <Accordion
-                type="single"
-                collapsible
-                className="space-y-3"
-              >
+            <AccordionContent className="space-y-4">
+              {/* =======================
+                  SUBTOPIC ACCORDION
+                 ======================= */}
+              <Accordion type="multiple" className="space-y-2">
                 {topic.subTopics.map((sub) => (
                   <AccordionItem
                     key={sub.id}
                     value={`sub-${sub.id}`}
+                    className="border rounded-lg px-3"
                   >
-                 <AccordionTrigger className="w-full flex items-center justify-between text-left">
-  <div className="flex items-center gap-2">
-    <Brain className="w-4 h-4 text-primary" />
-    <span>{sub.name}</span>
-  </div>
-</AccordionTrigger>
-
+                    {/* Subtopic */}
+                    <AccordionTrigger className="text-sm font-medium">
+                      {sub.name}
+                    </AccordionTrigger>
 
                     <AccordionContent>
-                      <Card className="rounded-2xl">
-                        <CardContent className="p-4 space-y-4">
-                          {/* QUESTIONS */}
-                          {sub.questions.map((q) => {
-                            const answer = answers[q.id];
-                            const locked =
-                              answer?.locked === true;
-                            const selected = answer?.selected;
-                            const correctKey =
-                              mapCorrectOption(
-                                q.correctOption
-                              );
-                            const isCorrect =
-                              selected === correctKey;
+                      {/* =======================
+                          QUESTIONS TABLE
+                         ======================= */}
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead>Status</TableHead>
+                            <TableHead>Question</TableHead>
+                            <TableHead>Practice</TableHead>
+                            <TableHead>Difficulty</TableHead>
+                          </TableRow>
+                        </TableHeader>
 
-                            return (
-                              <div
-                                key={q.id}
-                                className="border rounded-xl p-4 space-y-3"
-                              >
-                                {/* Question header */}
-                                <div className="flex justify-between items-center">
-                                  <p className="font-medium">
-                                    {q.title}
-                                  </p>
-                                  <div className="flex gap-2 items-center">
-                                    <Badge variant="secondary">
-                                      {q.difficulty}
-                                    </Badge>
-                                    {locked && (
-                                      <button
-                                        onClick={() =>
-                                          resetQuestion(
-                                            q.id
-                                          )
-                                        }
-                                        className="text-xs px-2 py-1 rounded-md border hover:bg-muted"
-                                      >
-                                        🔄
-                                      </button>
-                                    )}
-                                  </div>
-                                </div>
+                        <TableBody>
+                          {sub.questions.map((q) => (
+                            <TableRow key={q.id}>
+                              {/* Status */}
+                              <TableCell>
+                                <Checkbox
+                                  checked={!!q.solved}
+                                  onCheckedChange={(checked) =>
+                                    toggleSolved(q.id, Boolean(checked))
+                                  }
+                                />
+                              </TableCell>
 
-                                {/* Options */}
-                                <div className="grid grid-cols-2 gap-3">
-                                  {(
-                                    [
-                                      "optionA",
-                                      "optionB",
-                                      "optionC",
-                                      "optionD",
-                                    ] as const
-                                  ).map((opt) => (
-                                    <button
-                                      key={opt}
-                                      disabled={locked}
-                                      onClick={() =>
-                                        handleAnswer(
-                                          q.id,
-                                          opt
-                                        )
-                                      }
-                                      className={clsx(
-                                        "border rounded-lg p-2 text-left",
-                                        locked &&
-                                          opt ===
-                                            correctKey &&
-                                          "bg-green-100 border-green-500",
-                                        locked &&
-                                          selected ===
-                                            opt &&
-                                          opt !==
-                                            correctKey &&
-                                          "bg-red-100 border-red-500",
-                                        !locked &&
-                                          "hover:bg-muted"
-                                      )}
-                                    >
-                                      {q[opt]}
-                                    </button>
-                                  ))}
-                                </div>
+                              {/* Question */}
+                              <TableCell className="font-medium">
+                                {q.question}
+                              </TableCell>
 
-                                {/* Explanation */}
-                                {locked && (
-                                  <div
-                                    className={clsx(
-                                      "p-3 rounded-lg text-sm font-medium",
-                                      isCorrect
-                                        ? "bg-green-100 text-green-700"
-                                        : "bg-red-100 text-red-700"
-                                    )}
-                                  >
-                                    {isCorrect ? (
-                                      <>✅ Correct!</>
-                                    ) : (
-                                      <>
-                                        ❌ Incorrect.
-                                        <br />
-                                        <b>
-                                          Correct Answer:
-                                        </b>{" "}
-                                        {q[correctKey]}
-                                      </>
-                                    )}
-                                  </div>
-                                )}
-                              </div>
-                            );
-                          })}
-                        </CardContent>
-                      </Card>
+                              {/* Practice */}
+                              <TableCell>
+                                <a
+                                  href="#"
+                                  className="inline-flex items-center gap-1 text-muted-foreground hover:text-foreground"
+                                >
+                                  <ExternalLink className="w-4 h-4" />
+                                  Practice
+                                </a>
+                              </TableCell>
+
+                              {/* Difficulty */}
+                              <TableCell>
+                                <Badge
+                                  variant={difficultyVariant(q.difficulty)}
+                                >
+                                  {q.difficulty}
+                                </Badge>
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
                     </AccordionContent>
                   </AccordionItem>
                 ))}
@@ -238,4 +262,6 @@ export default function AptitudeSheet() {
       </Accordion>
     </div>
   );
-}
+};
+
+export default AptitudeSheet;

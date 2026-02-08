@@ -1,6 +1,10 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Calendar, Trophy, BookOpen } from "lucide-react";
+import { useToast } from "@/components/ui/use-toast";
+
+type EventStatus = "REGISTRATION_OPEN" | "REGISTRATION_CLOSED" | "COMPLETED";
+type EventType = "CODING" | "APTITUDE";
 
 type Event = {
   id: number;
@@ -8,13 +12,16 @@ type Event = {
   eventDate: string;
   registrationOpenDate: string;
   registrationCloseDate: string;
-  status: "REGISTRATION_OPEN" | "REGISTRATION_CLOSED" | "COMPLETED";
-  type: "CODING" | "APTITUDE";
+  status: EventStatus;
+  type: EventType;
 };
 
 const Events = () => {
   const [events, setEvents] = useState<Event[]>([]);
   const [loadingId, setLoadingId] = useState<number | null>(null);
+  const [tab, setTab] = useState<"UPCOMING" | "COMPLETED">("UPCOMING");
+  const [typeFilter, setTypeFilter] = useState<"ALL" | EventType>("ALL");
+  const { toast } = useToast();
 
   useEffect(() => {
     fetch("http://localhost:8081/api/events")
@@ -23,30 +30,44 @@ const Events = () => {
       .catch(console.error);
   }, []);
 
+  const filtered = useMemo(() => {
+    return events.filter((e) => {
+      const byTab =
+        tab === "UPCOMING" ? e.status !== "COMPLETED" : e.status === "COMPLETED";
+      const byType = typeFilter === "ALL" ? true : e.type === typeFilter;
+      return byTab && byType;
+    });
+  }, [events, tab, typeFilter]);
+
   const registerEvent = async (eventId: number) => {
     try {
       setLoadingId(eventId);
-      await fetch(`http://localhost:8081/api/events/${eventId}/register`, {
-        method: "POST",
+      const res = await fetch(
+        `http://localhost:8081/api/events/${eventId}/register`,
+        { method: "POST" }
+      );
+      if (!res.ok) throw new Error("Failed");
+      toast({
+        title: "Registered!",
+        description: "You have successfully registered for the event.",
       });
-      alert("Registered successfully!");
-    } catch (err) {
-      alert("Registration failed");
+    } catch {
+      toast({
+        title: "Registration failed",
+        description: "Please try again later.",
+        variant: "destructive",
+      });
     } finally {
       setLoadingId(null);
     }
   };
 
-  const getStatusBadge = (status: Event["status"]) => {
-    switch (status) {
-      case "REGISTRATION_OPEN":
-        return "text-green-600 bg-green-100";
-      case "REGISTRATION_CLOSED":
-        return "text-yellow-600 bg-yellow-100";
-      case "COMPLETED":
-        return "text-gray-600 bg-gray-200";
-    }
-  };
+  const badgeClass = (status: EventStatus) =>
+    status === "REGISTRATION_OPEN"
+      ? "text-green-600 bg-green-100"
+      : status === "REGISTRATION_CLOSED"
+      ? "text-yellow-600 bg-yellow-100"
+      : "text-gray-600 bg-gray-200";
 
   return (
     <div className="p-6 space-y-6">
@@ -57,8 +78,51 @@ const Events = () => {
         </p>
       </div>
 
+      {/* Tabs + Filters */}
+      <div className="flex flex-wrap gap-3 items-center">
+        <div className="flex gap-2">
+          <button
+            onClick={() => setTab("UPCOMING")}
+            className={`px-4 py-2 rounded-md text-sm font-medium ${
+              tab === "UPCOMING"
+                ? "bg-primary text-primary-foreground"
+                : "bg-muted text-muted-foreground"
+            }`}
+          >
+            Upcoming
+          </button>
+          <button
+            onClick={() => setTab("COMPLETED")}
+            className={`px-4 py-2 rounded-md text-sm font-medium ${
+              tab === "COMPLETED"
+                ? "bg-primary text-primary-foreground"
+                : "bg-muted text-muted-foreground"
+            }`}
+          >
+            Completed
+          </button>
+        </div>
+
+        <div className="ml-auto flex gap-2">
+          {(["ALL", "CODING", "APTITUDE"] as const).map((t) => (
+            <button
+              key={t}
+              onClick={() => setTypeFilter(t)}
+              className={`px-3 py-2 rounded-md text-sm ${
+                typeFilter === t
+                  ? "bg-accent text-accent-foreground"
+                  : "bg-muted text-muted-foreground"
+              }`}
+            >
+              {t}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Event Cards */}
       <div className="space-y-4">
-        {events.map((event) => (
+        {filtered.map((event) => (
           <Card key={event.id} className="rounded-2xl">
             <CardHeader className="flex flex-row justify-between items-start">
               <div>
@@ -67,9 +131,8 @@ const Events = () => {
                   Event Date: {event.eventDate}
                 </p>
               </div>
-
               <span
-                className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusBadge(
+                className={`px-3 py-1 rounded-full text-xs font-medium ${badgeClass(
                   event.status
                 )}`}
               >
@@ -84,7 +147,6 @@ const Events = () => {
                   Reg: {event.registrationOpenDate} →{" "}
                   {event.registrationCloseDate}
                 </div>
-
                 <div className="flex items-center gap-1">
                   {event.type === "CODING" ? (
                     <Trophy className="w-4 h-4" />
@@ -95,7 +157,6 @@ const Events = () => {
                 </div>
               </div>
 
-              {/* ACTION */}
               {event.status === "REGISTRATION_OPEN" ? (
                 <button
                   onClick={() => registerEvent(event.id)}

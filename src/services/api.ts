@@ -218,10 +218,25 @@ export const studentService = {
   },
 
   // Progress
-  async updateQuestionProgress(questionId: number, completed: boolean): Promise<Progress> {
-    const { data } = await api.post<Progress>('/api/progress/question', { questionId, completed });
+async getCodingProgress(userId: number) {
+  const { data } = await api.get(`/api/progress/coding?userId=${userId}`);
+  return data;
+},
+
+async getAptitudeProgress(userId: number) {
+  const { data } = await api.get(`/api/progress/aptitude?userId=${userId}`);
+  return data;
+},
+
+  // Progress
+  async updateQuestionProgress(questionId: number, solved: boolean): Promise<Progress> {
+    const { data } = await api.post<Progress>(
+      '/api/progress/question',
+      { questionId, solved }   // ✅ CORRECT FIELD
+    );
     return data;
   },
+  
 
   async getMyProgress(): Promise<StudentProgress> {
     const { data } = await api.get<StudentProgress>('/api/progress/my');
