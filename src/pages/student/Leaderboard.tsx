@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Trophy } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 type LeaderboardEntry = {
   studentId: number;
@@ -14,6 +14,7 @@ const Leaderboard = () => {
   const [tab, setTab] = useState<TabType>("CODING");
   const [data, setData] = useState<LeaderboardEntry[]>([]);
   const [loading, setLoading] = useState(false);
+  const navigate = useNavigate();
 
   useEffect(() => {
     setLoading(true);
@@ -63,71 +64,95 @@ const Leaderboard = () => {
       ) : (
         <>
           {/* Top 3 */}
-         {/* Top 3 (1st in center) */}
+        {/* ================= TOP 3 ================= */}
 <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 items-end">
-  {/* 2nd Place */}
-  {top3[1] && (
-    <div className="order-1 sm:order-1">
-      <div className="p-4 rounded-xl border bg-card text-center
-        transition-all duration-300 ease-out
-        hover:-translate-y-2 hover:shadow-lg hover:scale-[1.02]">
-        <div className="text-2xl mb-1">🥈</div>
-        <p className="font-semibold text-foreground">
-          {top3[1].studentName}
-        </p>
-        <p className="text-xs text-muted-foreground">
-          {top3[1].studentEmail}
-        </p>
-        <p className="mt-2 font-bold text-foreground">
-          {top3[1].totalPoints} pts
-        </p>
-      </div>
-    </div>
-  )}
 
-  {/* 1st Place (CENTER) */}
-  {top3[0] && (
-    <div className="order-2 sm:order-2">
-      <div className="p-6 rounded-2xl border bg-card text-center
-        transition-all duration-300 ease-out
-        hover:-translate-y-3 hover:shadow-xl hover:scale-[1.05]">
-        <div className="text-3xl mb-2">🥇</div>
-        <p className="text-lg font-bold text-foreground">
-          {top3[0].studentName}
-        </p>
-        <p className="text-xs text-muted-foreground">
-          {top3[0].studentEmail}
-        </p>
-        <p className="mt-3 text-xl font-extrabold text-foreground">
-          {top3[0].totalPoints} pts
-        </p>
-      </div>
-    </div>
-  )}
+{/* 2nd Place */}
+{top3[1] && (
+  <div
+    onClick={() => navigate(`/dashboard/profile/${top3[1].studentId}`)}
+    className="order-1 sm:order-1 cursor-pointer"
+  >
+    <div className="p-5 rounded-xl border bg-card text-center
+      transition-all duration-300 ease-out
+      hover:-translate-y-3 hover:shadow-xl hover:scale-[1.04]">
 
-  {/* 3rd Place */}
-  {top3[2] && (
-    <div className="order-3 sm:order-3">
-      <div className="p-4 rounded-xl border bg-card text-center
-        transition-all duration-300 ease-out
-        hover:-translate-y-2 hover:shadow-lg hover:scale-[1.02]">
-        <div className="text-2xl mb-1">🥉</div>
-        <p className="font-semibold text-foreground">
-          {top3[2].studentName}
-        </p>
-        <p className="text-xs text-muted-foreground">
-          {top3[2].studentEmail}
-        </p>
-        <p className="mt-2 font-bold text-foreground">
-          {top3[2].totalPoints} pts
-        </p>
-      </div>
+      <div className="text-3xl mb-2">🥈</div>
+
+      <p className="font-semibold text-foreground">
+        {top3[1].studentName}
+      </p>
+
+      <p className="text-xs text-muted-foreground">
+        {top3[1].studentEmail}
+      </p>
+
+      <p className="mt-3 font-bold text-foreground">
+        {top3[1].totalPoints} pts
+      </p>
     </div>
-  )}
+  </div>
+)}
+
+{/* 🥇 FIRST PLACE (CENTER & BIGGER) */}
+{top3[0] && (
+  <div
+    onClick={() => navigate(`/dashboard/profile/${top3[0].studentId}`)}
+    className="order-2 sm:order-2 cursor-pointer"
+  >
+    <div className="p-8 rounded-2xl border bg-card text-center
+      transition-all duration-300 ease-out
+      hover:-translate-y-4 hover:shadow-2xl hover:scale-[1.08]
+      ring-2 ring-primary/20">
+
+      <div className="text-4xl mb-3">🥇</div>
+
+      <p className="text-xl font-bold text-foreground">
+        {top3[0].studentName}
+      </p>
+
+      <p className="text-xs text-muted-foreground">
+        {top3[0].studentEmail}
+      </p>
+
+      <p className="mt-4 text-2xl font-extrabold text-primary">
+        {top3[0].totalPoints} pts
+      </p>
+    </div>
+  </div>
+)}
+
+{/* 3rd Place */}
+{top3[2] && (
+  <div
+    onClick={() => navigate(`/dashboard/profile/${top3[2].studentId}`)}
+    className="order-3 sm:order-3 cursor-pointer"
+  >
+    <div className="p-5 rounded-xl border bg-card text-center
+      transition-all duration-300 ease-out
+      hover:-translate-y-3 hover:shadow-xl hover:scale-[1.04]">
+
+      <div className="text-3xl mb-2">🥉</div>
+
+      <p className="font-semibold text-foreground">
+        {top3[2].studentName}
+      </p>
+
+      <p className="text-xs text-muted-foreground">
+        {top3[2].studentEmail}
+      </p>
+
+      <p className="mt-3 font-bold text-foreground">
+        {top3[2].totalPoints} pts
+      </p>
+    </div>
+  </div>
+)}
+
 </div>
 
 
-          {/* Rest of leaderboard */}
+          {/* Rest */}
           <div className="mt-6 overflow-x-auto">
             <table className="w-full border-collapse">
               <thead>
@@ -142,7 +167,10 @@ const Leaderboard = () => {
                 {rest.map((user, index) => (
                   <tr
                     key={user.studentId}
-                    className="border-b last:border-0 hover:bg-muted/50"
+                    onClick={() =>
+                      navigate(`/dashboard/profile/${user.studentId}`)
+                    }
+                    className="cursor-pointer border-b last:border-0 hover:bg-muted/50 transition-colors"
                   >
                     <td className="py-2 px-2 font-medium">
                       {index + 4}

@@ -11,6 +11,8 @@ import {
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import AnimatedCounter from '@/components/AnimatedCounter';
+import { useNavigate } from "react-router-dom";
+
 
 // Mock data - replace with real API calls
 const stats = [
@@ -52,6 +54,8 @@ const itemVariants = {
 };
 
 const AdminDashboard = () => {
+  const navigate = useNavigate();
+
   return (
     <motion.div
       variants={containerVariants}
@@ -188,24 +192,28 @@ const AdminDashboard = () => {
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              {[
-                { label: 'Add Topic', icon: FileText, color: 'bg-info' },
-                { label: 'Create Event', icon: Calendar, color: 'bg-success' },
-                { label: 'Add Career Track', icon: BookOpen, color: 'bg-warning' },
-                { label: 'View Students', icon: Users, color: 'bg-accent' },
-              ].map((action, i) => (
-                <motion.button
-                  key={action.label}
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                  className="flex flex-col items-center gap-3 p-4 rounded-xl border border-border hover:border-accent hover:shadow-md transition-all"
-                >
-                  <div className={`w-12 h-12 rounded-xl ${action.color} flex items-center justify-center`}>
-                    <action.icon className="w-6 h-6 text-card" />
-                  </div>
-                  <span className="text-sm font-medium text-foreground">{action.label}</span>
-                </motion.button>
-              ))}
+            {[
+  { label: 'Topics & Questions', icon: FileText, color: 'bg-info', path: '/admin/topics' },
+  { label: 'Create Event', icon: Calendar, color: 'bg-success', path: '/admin/events' },
+  { label: 'Career Tracks', icon: BookOpen, color: 'bg-warning', path: '/admin/career-tracks' },
+  { label: 'View Students', icon: Users, color: 'bg-accent', path: '/admin/students' },
+].map((action, i) => (
+  <motion.button
+    key={action.label}
+    whileHover={{ scale: 1.02 }}
+    whileTap={{ scale: 0.98 }}
+    onClick={() => navigate(action.path)}
+    className="flex flex-col items-center gap-3 p-4 rounded-xl border border-border hover:border-accent hover:shadow-md transition-all"
+  >
+    <div className={`w-12 h-12 rounded-xl ${action.color} flex items-center justify-center`}>
+      <action.icon className="w-6 h-6 text-card" />
+    </div>
+    <span className="text-sm font-medium text-foreground">
+      {action.label}
+    </span>
+  </motion.button>
+))}
+
             </div>
           </CardContent>
         </Card>

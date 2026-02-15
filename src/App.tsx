@@ -22,12 +22,14 @@ import AdminDashboard from "./pages/admin/AdminDashboard";
 import StudentDashboard from "./pages/student/StudentDashboard";
 
 // Components
+import AdminContentManager from"./pages/admin/AdminContentManager";
 import ProtectedRoute from "./components/ProtectedRoute";
 import CodingSheet from "./pages/student/CodingSheet";
 import AptitudeSheet from"./pages/student/AptitudeSheet";
 import Leaderboard from "./pages/student/Leaderboard";
 import CareerTracks from "./pages/student/CareerTracks";
 import CareerResources from "./pages/student/CareerResources";
+import StudentProfile from "./pages/student/StudentProfile";
 import Events from "./pages/student/Events";
 
 const queryClient = new QueryClient();
@@ -46,20 +48,23 @@ const App = () => (
             <Route path="/register" element={<RegisterPage />} />
 
             {/* Admin Routes */}
-            <Route
-              path="/admin"
-              element={
-                <ProtectedRoute allowedRoles={['ADMIN']}>
-                  <AdminLayout />
-                </ProtectedRoute>
-              }
-            >
-              <Route index element={<AdminDashboard />} />
-              <Route path="topics" element={<AdminDashboard />} />
-              <Route path="events" element={<AdminDashboard />} />
-              <Route path="career-tracks" element={<AdminDashboard />} />
-              <Route path="students" element={<AdminDashboard />} />
-            </Route>
+           {/* Admin Routes */}
+<Route
+  path="/admin"
+  element={
+    <ProtectedRoute allowedRoles={['ADMIN']}>
+      <AdminLayout />
+    </ProtectedRoute>
+  }
+>
+  <Route index element={<AdminDashboard />} />
+
+  {/* FIXED ROUTES */}
+  <Route path="topics" element={<AdminContentManager />} />
+  <Route path="events" element={<AdminDashboard />} />
+  <Route path="career-tracks" element={<AdminDashboard />} />
+  <Route path="students" element={<AdminDashboard />} />
+</Route>
 
             {/* Student Routes */}
            <Route
@@ -75,6 +80,8 @@ const App = () => (
   <Route path="aptitude" element={<AptitudeSheet />} />
   <Route path="leaderboard" element={<Leaderboard />} />
   <Route path="events" element={<Events />} />
+  <Route path="profile/:id" element={<StudentProfile />} />
+  <Route path="profile" element={<StudentProfile />} />
   <Route path="career-tracks" element={<CareerTracks />} />
 <Route path="career-tracks/:id" element={<CareerResources />} />
 

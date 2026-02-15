@@ -1,35 +1,32 @@
 import { useEffect, useState } from "react";
+import axios from "axios";
 import { studentService } from "@/services/api";
 
-// shadcn UI
 import {
   Accordion,
   AccordionContent,
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { Checkbox } from "@/components/ui/checkbox";
+
 import { Badge } from "@/components/ui/badge";
-
-// icons
-import { ExternalLink } from "lucide-react";
-
-/* =======================
-   UI DTO TYPES
-   ======================= */
+import { Progress } from "@/components/ui/progress";
+import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
 interface AptitudeQuestion {
   id: number;
   question: string;
   difficulty: "EASY" | "MEDIUM" | "HARD";
+  correctOption: string;
+
+  optionA: string;
+  optionB: string;
+  optionC: string;
+  optionD: string;
+
+  selectedOption?: string;
+  showResult?: boolean;
   solved?: boolean;
 }
 
@@ -45,9 +42,7 @@ interface AptitudeTopic {
   subTopics: AptitudeSubTopic[];
 }
 
-/* =======================
-   Helpers
-   ======================= */
+const USER_ID = 13;
 
 const difficultyVariant = (difficulty: string) => {
   switch (difficulty) {
@@ -62,21 +57,32 @@ const difficultyVariant = (difficulty: string) => {
   }
 };
 
-/* =======================
-   Component
-   ======================= */
-
 const AptitudeSheet = () => {
   const [topics, setTopics] = useState<AptitudeTopic[]>([]);
+  const [progress, setProgress] = useState({
+    solvedQuestions: 0,
+    totalQuestions: 0,
+    progressPercentage: 0,
+  });
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    const fetchSheet = async () => {
-      try {
-        const data = await studentService.getAptitudeSheet();
+  /* ================= FETCH PROGRESS ================= */
 
-        // 🔥 Normalize backend → UI
-        const mappedTopics: AptitudeTopic[] = (data.topics || []).map(
+  const fetchProgress = async () => {
+    const res = await axios.get(
+      `http://localhost:8081/api/progress/aptitude?userId=${USER_ID}`
+    );
+    setProgress(res.data);
+  };
+
+  /* ================= FETCH SHEET ================= */
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const sheet = await studentService.getAptitudeSheet();
+
+        const mappedTopics: AptitudeTopic[] = (sheet.topics || []).map(
           (t: any) => ({
             id: t.id,
             name: t.name,
@@ -85,90 +91,126 @@ const AptitudeSheet = () => {
               name: s.name,
               questions: (s.questions || []).map((q: any) => ({
                 id: q.id,
-                question: q.question,
+                question: q.title,
                 difficulty: q.difficulty,
-                solved: q.solved, // 👈 IMPORTANT
+                correctOption: q.correctOption,
+                optionA: q.optionA,
+                optionB: q.optionB,
+                optionC: q.optionC,
+                optionD: q.optionD,
+                solved: q.solved,
               })),
             })),
           })
         );
 
         setTopics(mappedTopics);
-      } catch (error) {
-        console.error("Failed to load aptitude sheet", error);
+        await fetchProgress();
+      } catch (err) {
+        console.error("Error loading sheet", err);
       } finally {
         setLoading(false);
       }
     };
 
-    fetchSheet();
+    fetchData();
   }, []);
 
-  /* =======================
-     Progress Toggle
-     ======================= */
+  /* ================= OPTION CLICK ================= */
 
-  const toggleSolved = async (questionId: number, solved: boolean) => {
-    // Optimistic UI update
+  const handleOptionClick = async (
+    questionId: number,
+    option: string,
+    correctOption: string
+  ) => {
+    const isCorrect = option === correctOption;
+
     setTopics((prev) =>
       prev.map((topic) => ({
         ...topic,
         subTopics: topic.subTopics.map((sub) => ({
           ...sub,
           questions: sub.questions.map((q) =>
-            q.id === questionId ? { ...q, solved } : q
+            q.id === questionId
+              ? {
+                  ...q,
+                  selectedOption: option,
+                  showResult: true,
+                  solved: isCorrect,
+                }
+              : q
           ),
         })),
       }))
     );
 
-    try {
-      await studentService.updateQuestionProgress(questionId, solved);
-    } catch (error) {
-      console.error("Failed to update aptitude progress", error);
-
-      // Revert on failure
-      setTopics((prev) =>
-        prev.map((topic) => ({
-          ...topic,
-          subTopics: topic.subTopics.map((sub) => ({
-            ...sub,
-            questions: sub.questions.map((q) =>
-              q.id === questionId ? { ...q, solved: !solved } : q
-            ),
-          })),
-        }))
-      );
+    if (isCorrect) {
+      await studentService.updateQuestionProgress(questionId, true);
+      await fetchProgress();
     }
   };
 
-  /* =======================
-     UI
-     ======================= */
+  /* ================= RETRY ================= */
 
-  if (loading) {
-    return (
-      <div className="p-6 text-muted-foreground">
-        Loading aptitude sheet...
-      </div>
+  const handleRetry = async (questionId: number) => {
+    setTopics((prev) =>
+      prev.map((topic) => ({
+        ...topic,
+        subTopics: topic.subTopics.map((sub) => ({
+          ...sub,
+          questions: sub.questions.map((q) =>
+            q.id === questionId
+              ? {
+                  ...q,
+                  selectedOption: undefined,
+                  showResult: false,
+                  solved: false,
+                }
+              : q
+          ),
+        })),
+      }))
     );
-  }
+
+    await studentService.updateQuestionProgress(questionId, false);
+    await fetchProgress();
+  };
+
+  /* ================= OPTION STYLE ================= */
+
+  const getOptionStyle = (q: AptitudeQuestion, option: string) => {
+    if (!q.showResult) return "hover:bg-muted cursor-pointer";
+
+    if (option === q.correctOption)
+      return "bg-green-100 border-green-500 text-green-700";
+
+    if (option === q.selectedOption)
+      return "bg-red-100 border-red-500 text-red-700";
+
+    return "opacity-60";
+  };
+
+  if (loading) return <div className="p-6">Loading...</div>;
 
   return (
     <div className="p-6 space-y-6">
-      {/* Header */}
-      <div>
-        <h1 className="text-2xl font-bold text-foreground">
-          Aptitude Sheet
-        </h1>
-        <p className="text-muted-foreground">
-          Practice aptitude questions and track your progress
-        </p>
+
+      {/* HEADER + PROGRESS */}
+      <div className="flex justify-between items-center">
+        <h1 className="text-2xl font-bold">Aptitude Cheat Sheet</h1>
+
+        <div className="w-60 space-y-2">
+          <Progress
+            value={progress.progressPercentage}
+            className="transition-all duration-700"
+          />
+          <div className="text-sm text-right text-muted-foreground">
+            {progress.solvedQuestions}/{progress.totalQuestions}
+          </div>
+        </div>
       </div>
 
-      {/* =======================
-          TOPIC ACCORDION
-         ======================= */}
+      {/* TOPICS */}
       <Accordion type="multiple" className="space-y-4">
         {topics.map((topic) => (
           <AccordionItem
@@ -176,86 +218,65 @@ const AptitudeSheet = () => {
             value={`topic-${topic.id}`}
             className="border rounded-xl px-4"
           >
-            {/* Topic */}
             <AccordionTrigger className="text-lg font-semibold">
               {topic.name}
             </AccordionTrigger>
 
-            <AccordionContent className="space-y-4">
-              {/* =======================
-                  SUBTOPIC ACCORDION
-                 ======================= */}
-              <Accordion type="multiple" className="space-y-2">
-                {topic.subTopics.map((sub) => (
-                  <AccordionItem
-                    key={sub.id}
-                    value={`sub-${sub.id}`}
-                    className="border rounded-lg px-3"
-                  >
-                    {/* Subtopic */}
-                    <AccordionTrigger className="text-sm font-medium">
-                      {sub.name}
-                    </AccordionTrigger>
+            <AccordionContent>
+              {topic.subTopics.map((sub) => (
+                <div key={sub.id} className="mb-6">
+                  <h3 className="font-semibold mb-3">{sub.name}</h3>
 
-                    <AccordionContent>
-                      {/* =======================
-                          QUESTIONS TABLE
-                         ======================= */}
-                      <Table>
-                        <TableHeader>
-                          <TableRow>
-                            <TableHead>Status</TableHead>
-                            <TableHead>Question</TableHead>
-                            <TableHead>Practice</TableHead>
-                            <TableHead>Difficulty</TableHead>
-                          </TableRow>
-                        </TableHeader>
+                  {sub.questions.map((q) => (
+                    <div
+                      key={q.id}
+                      className="border rounded-lg p-4 mb-4 space-y-3 transition-all duration-500"
+                    >
+                      <div className="flex justify-between items-center">
+                        <p className="font-medium">{q.question}</p>
+                        <Badge variant={difficultyVariant(q.difficulty)}>
+                          {q.difficulty}
+                        </Badge>
+                      </div>
 
-                        <TableBody>
-                          {sub.questions.map((q) => (
-                            <TableRow key={q.id}>
-                              {/* Status */}
-                              <TableCell>
-                                <Checkbox
-                                  checked={!!q.solved}
-                                  onCheckedChange={(checked) =>
-                                    toggleSolved(q.id, Boolean(checked))
-                                  }
-                                />
-                              </TableCell>
+                      {/* OPTIONS */}
+                      {["A", "B", "C", "D"].map((opt) => (
+                        <div
+                          key={opt}
+                          onClick={() =>
+                            !q.showResult &&
+                            handleOptionClick(q.id, opt, q.correctOption)
+                          }
+                          className={cn(
+                            "border p-2 rounded-md transition-all duration-300",
+                            getOptionStyle(q, opt)
+                          )}
+                        >
+                          {opt}. {q[`option${opt}` as keyof AptitudeQuestion]}
+                        </div>
+                      ))}
 
-                              {/* Question */}
-                              <TableCell className="font-medium">
-                                {q.question}
-                              </TableCell>
+                      {/* RESULT + RETRY */}
+                      {q.showResult && (
+                        <div className="space-y-3 animate-in fade-in duration-500">
 
-                              {/* Practice */}
-                              <TableCell>
-                                <a
-                                  href="#"
-                                  className="inline-flex items-center gap-1 text-muted-foreground hover:text-foreground"
-                                >
-                                  <ExternalLink className="w-4 h-4" />
-                                  Practice
-                                </a>
-                              </TableCell>
+                          <div className="text-sm font-medium">
+                            Correct Answer: {q.correctOption}
+                          </div>
 
-                              {/* Difficulty */}
-                              <TableCell>
-                                <Badge
-                                  variant={difficultyVariant(q.difficulty)}
-                                >
-                                  {q.difficulty}
-                                </Badge>
-                              </TableCell>
-                            </TableRow>
-                          ))}
-                        </TableBody>
-                      </Table>
-                    </AccordionContent>
-                  </AccordionItem>
-                ))}
-              </Accordion>
+                          <Button
+                            size="sm"
+                            className="bg-blue-500 hover:bg-blue-600 text-white transition-all duration-300"
+                            onClick={() => handleRetry(q.id)}
+                          >
+                            Retry
+                          </Button>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              ))}
             </AccordionContent>
           </AccordionItem>
         ))}
