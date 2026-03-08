@@ -4,6 +4,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
+import AdminEvents from "./pages/admin/AdminEvents";
 
 // Pages
 import Index from "./pages/Index";
@@ -31,6 +32,7 @@ import CareerTracks from "./pages/student/CareerTracks";
 import CareerResources from "./pages/student/CareerResources";
 import StudentProfile from "./pages/student/StudentProfile";
 import Events from "./pages/student/Events";
+import AdminEventRegistrations from "./pages/admin/AdminEventRegistrations";
 
 const queryClient = new QueryClient();
 
@@ -61,7 +63,11 @@ const App = () => (
 
   {/* FIXED ROUTES */}
   <Route path="topics" element={<AdminContentManager />} />
-  <Route path="events" element={<AdminDashboard />} />
+  <Route
+ path="events/:eventId/registrations"
+ element={<AdminEventRegistrations />}
+/>
+  <Route path="events" element={<AdminEvents />} />
   <Route path="career-tracks" element={<AdminDashboard />} />
   <Route path="students" element={<AdminDashboard />} />
 </Route>

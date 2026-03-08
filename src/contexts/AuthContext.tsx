@@ -84,7 +84,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     throw new Error("Invalid login response");
   }
 
-  localStorage.setItem("authToken", response.token);
+  localStorage.setItem("token", response.token);
   localStorage.setItem("user", JSON.stringify(response.user));
   setUser(response.user);
       }
@@ -111,7 +111,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
  const logout = useCallback(() => {
   localStorage.removeItem("user");
-  localStorage.removeItem("authToken");
+  localStorage.removeItem("token");
   authService.logout();
   setUser(null);
 }, []);

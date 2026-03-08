@@ -39,29 +39,44 @@ const Events = () => {
     });
   }, [events, tab, typeFilter]);
 
+
   const registerEvent = async (eventId: number) => {
     try {
       setLoadingId(eventId);
+  
+      const token = localStorage.getItem("token");
+  
       const res = await fetch(
         `http://localhost:8081/api/events/${eventId}/register`,
-        { method: "POST" }
+        {
+          method: "POST",
+          headers: {
+            "Authorization": `Bearer ${token}`,
+            "Content-Type": "application/json"
+          }
+        }
       );
+  
       if (!res.ok) throw new Error("Failed");
+  
       toast({
         title: "Registered!",
         description: "You have successfully registered for the event.",
       });
-    } catch {
+  
+    } catch (err) {
+      console.error(err);
+  
       toast({
         title: "Registration failed",
         description: "Please try again later.",
         variant: "destructive",
       });
+  
     } finally {
       setLoadingId(null);
     }
   };
-
   const badgeClass = (status: EventStatus) =>
     status === "REGISTRATION_OPEN"
       ? "text-green-600 bg-green-100"
