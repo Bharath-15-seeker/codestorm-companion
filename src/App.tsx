@@ -33,6 +33,8 @@ import CareerResources from "./pages/student/CareerResources";
 import StudentProfile from "./pages/student/StudentProfile";
 import Events from "./pages/student/Events";
 import AdminEventRegistrations from "./pages/admin/AdminEventRegistrations";
+import CareerTracksManagement from "./pages/admin/CareerTracksManagement";
+import AdminStudents from "./pages/admin/AdminStudents";
 
 const queryClient = new QueryClient();
 
@@ -50,8 +52,7 @@ const App = () => (
             <Route path="/register" element={<RegisterPage />} />
 
             {/* Admin Routes */}
-           {/* Admin Routes */}
-<Route
+ <Route
   path="/admin"
   element={
     <ProtectedRoute allowedRoles={['ADMIN']}>
@@ -61,17 +62,22 @@ const App = () => (
 >
   <Route index element={<AdminDashboard />} />
 
-  {/* FIXED ROUTES */}
   <Route path="topics" element={<AdminContentManager />} />
-  <Route
- path="events/:eventId/registrations"
- element={<AdminEventRegistrations />}
-/>
-  <Route path="events" element={<AdminEvents />} />
-  <Route path="career-tracks" element={<AdminDashboard />} />
-  <Route path="students" element={<AdminDashboard />} />
-</Route>
 
+  <Route path="events" element={<AdminEvents />} />
+
+  <Route
+    path="events/:eventId/registrations"
+    element={<AdminEventRegistrations />}
+  />
+
+<Route path="leaderboard" element={<Leaderboard />} />
+
+  <Route path="career-tracks" element={<CareerTracksManagement />} />
+
+  <Route path="students" element={<AdminStudents />} />
+
+</Route>
             {/* Student Routes */}
            <Route
   path="/dashboard"
@@ -93,6 +99,7 @@ const App = () => (
 
 </Route>
 
+<Route path="/students/:id" element={<StudentProfile />} />
 
             {/* Catch-all */}
             <Route path="*" element={<NotFound />} />

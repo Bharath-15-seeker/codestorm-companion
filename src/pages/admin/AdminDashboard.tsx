@@ -1,51 +1,22 @@
-import { motion } from 'framer-motion';
+import { motion } from "framer-motion";
+import { useEffect, useState } from "react";
 import {
   Users,
   FileText,
   Calendar,
   TrendingUp,
-  Award,
-  ArrowUpRight,
   BookOpen,
-  Activity,
-} from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import AnimatedCounter from '@/components/AnimatedCounter';
+  Award,
+  Brain,
+} from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import AnimatedCounter from "@/components/AnimatedCounter";
 import { useNavigate } from "react-router-dom";
-
-
-// Mock data - replace with real API calls
-const stats = [
-  { label: 'Total Students', value: 1234, icon: Users, trend: '+12%', color: 'bg-info' },
-  { label: 'Questions', value: 567, icon: FileText, trend: '+8%', color: 'bg-success' },
-  { label: 'Active Events', value: 8, icon: Calendar, trend: '+2', color: 'bg-accent' },
-  { label: 'Career Tracks', value: 15, icon: BookOpen, trend: '+3', color: 'bg-warning' },
-];
-
-const recentActivities = [
-  { action: 'New student registered', user: 'Alex Johnson', time: '2 min ago' },
-  { action: 'Event created', user: 'Admin', time: '1 hour ago' },
-  { action: 'Question added to Arrays', user: 'Admin', time: '3 hours ago' },
-  { action: 'Career track updated', user: 'Admin', time: '5 hours ago' },
-  { action: 'Event registration', user: 'Sarah Williams', time: '1 day ago' },
-];
-
-const topPerformers = [
-  { name: 'Alex Johnson', score: 980, rank: 1 },
-  { name: 'Sarah Williams', score: 945, rank: 2 },
-  { name: 'Mike Chen', score: 920, rank: 3 },
-  { name: 'Emily Davis', score: 890, rank: 4 },
-  { name: 'Chris Brown', score: 875, rank: 5 },
-];
+import api from "@/services/api";
 
 const containerVariants = {
   hidden: { opacity: 0 },
-  visible: {
-    opacity: 1,
-    transition: {
-      staggerChildren: 0.1,
-    },
-  },
+  visible: { opacity: 1, transition: { staggerChildren: 0.1 } },
 };
 
 const itemVariants = {
@@ -56,6 +27,64 @@ const itemVariants = {
 const AdminDashboard = () => {
   const navigate = useNavigate();
 
+  const [statsData, setStatsData] = useState<any>(null);
+  const [codingLeaders, setCodingLeaders] = useState<any[]>([]);
+  const [aptitudeLeaders, setAptitudeLeaders] = useState<any[]>([]);
+
+  /* ================= FETCH DASHBOARD DATA ================= */
+
+  useEffect(() => {
+    const loadDashboard = async () => {
+      try {
+        const stats = await api.get("/api/admin/dashboard/stats");
+        setStatsData(stats.data);
+
+        const coding = await api.get("/api/leaderboard/api/admin/dashboard/top-coding");
+        setCodingLeaders(coding.data);
+
+        const aptitude = await api.get("/api/leaderboard/api/admin/dashboard/top-aptitude");
+        setAptitudeLeaders(aptitude.data);
+      } catch (err) {
+        console.error("Dashboard load failed", err);
+      }
+    };
+
+    loadDashboard();
+  }, []);
+
+  /* ================= STATS ================= */
+
+  const stats = [
+    {
+      label: "Total Students",
+      value: statsData?.totalStudents || 0,
+      icon: Users,
+      color: "bg-info",
+      path: "/admin/students",
+    },
+    {
+      label: "Questions",
+      value: statsData?.totalQuestions || 0,
+      icon: FileText,
+      color: "bg-success",
+      path: "/admin/topics",
+    },
+    {
+      label: "Active Events",
+      value: statsData?.totalEvents || 0,
+      icon: Calendar,
+      color: "bg-accent",
+      path: "/admin/events",
+    },
+    {
+      label: "Career Tracks",
+      value: statsData?.totalCareerTracks || 0,
+      icon: BookOpen,
+      color: "bg-warning",
+      path: "/admin/career-tracks",
+    },
+  ];
+
   return (
     <motion.div
       variants={containerVariants}
@@ -63,37 +92,44 @@ const AdminDashboard = () => {
       animate="visible"
       className="space-y-6"
     >
-      {/* Page Header */}
+      {/* HEADER */}
+
       <motion.div variants={itemVariants}>
-        <h1 className="text-2xl font-bold text-foreground">Dashboard Overview</h1>
-        <p className="text-muted-foreground">Welcome back! Here's what's happening.</p>
+        <h1 className="text-2xl font-bold">Dashboard Overview</h1>
+        <p className="text-muted-foreground">
+          Welcome back! Here's what's happening.
+        </p>
       </motion.div>
 
-      {/* Stats Grid */}
-      <motion.div variants={itemVariants} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {stats.map((stat, i) => (
+      {/* ================= STATS ================= */}
+
+      <motion.div
+        variants={itemVariants}
+        className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4"
+      >
+        {stats.map((stat) => (
           <motion.div
             key={stat.label}
-            variants={itemVariants}
             whileHover={{ y: -4 }}
-            transition={{ duration: 0.2 }}
+            className="cursor-pointer"
+            onClick={() => navigate(stat.path)}
           >
-            <Card className="card-hover border-0 shadow-card">
-              <CardContent className="p-6">
-                <div className="flex items-start justify-between">
-                  <div>
-                    <p className="text-sm text-muted-foreground mb-1">{stat.label}</p>
-                    <div className="text-3xl font-bold text-foreground">
-                      <AnimatedCounter value={stat.value} />
-                    </div>
-                    <div className="flex items-center gap-1 mt-2">
-                      <TrendingUp className="w-4 h-4 text-success" />
-                      <span className="text-sm font-medium text-success">{stat.trend}</span>
-                    </div>
-                  </div>
-                  <div className={`w-12 h-12 rounded-xl ${stat.color} flex items-center justify-center`}>
-                    <stat.icon className="w-6 h-6 text-card" />
-                  </div>
+            <Card className="border-0 shadow-card">
+              <CardContent className="p-6 flex justify-between items-center">
+                <div>
+                  <p className="text-sm text-muted-foreground">
+                    {stat.label}
+                  </p>
+
+                  <p className="text-3xl font-bold">
+                    <AnimatedCounter value={stat.value} />
+                  </p>
+                </div>
+
+                <div
+                  className={`w-12 h-12 rounded-xl ${stat.color} flex items-center justify-center`}
+                >
+                  <stat.icon className="w-6 h-6 text-white" />
                 </div>
               </CardContent>
             </Card>
@@ -101,123 +137,132 @@ const AdminDashboard = () => {
         ))}
       </motion.div>
 
-      {/* Main Content Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Recent Activity */}
-        <motion.div variants={itemVariants} className="lg:col-span-2">
-          <Card className="border-0 shadow-card h-full">
-            <CardHeader className="flex flex-row items-center justify-between">
-              <CardTitle className="flex items-center gap-2">
-                <Activity className="w-5 h-5 text-accent" />
-                Recent Activity
-              </CardTitle>
-              <button className="text-sm text-accent font-medium hover:underline flex items-center gap-1">
-                View all <ArrowUpRight className="w-4 h-4" />
-              </button>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {recentActivities.map((activity, i) => (
-                  <motion.div
-                    key={i}
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: i * 0.1 }}
-                    className="flex items-center gap-4 p-3 rounded-xl hover:bg-muted/50 transition-colors"
-                  >
-                    <div className="w-2 h-2 rounded-full bg-accent" />
-                    <div className="flex-1">
-                      <p className="text-sm font-medium text-foreground">{activity.action}</p>
-                      <p className="text-xs text-muted-foreground">{activity.user}</p>
-                    </div>
-                    <span className="text-xs text-muted-foreground">{activity.time}</span>
-                  </motion.div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        </motion.div>
+      {/* ================= LEADERS ================= */}
 
-        {/* Top Performers */}
-        <motion.div variants={itemVariants}>
-          <Card className="border-0 shadow-card h-full">
-            <CardHeader className="flex flex-row items-center justify-between">
-              <CardTitle className="flex items-center gap-2">
-                <Award className="w-5 h-5 text-accent" />
-                Top Performers
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-3">
-                {topPerformers.map((student, i) => (
-                  <motion.div
-                    key={student.name}
-                    initial={{ opacity: 0, x: 20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: i * 0.1 }}
-                    className="flex items-center gap-3 p-2 rounded-lg hover:bg-muted/50 transition-colors"
-                  >
-                    <div
-                      className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${
-                        student.rank === 1
-                          ? 'bg-accent text-accent-foreground'
-                          : student.rank === 2
-                          ? 'bg-muted text-foreground'
-                          : student.rank === 3
-                          ? 'bg-warning/20 text-warning'
-                          : 'bg-muted text-muted-foreground'
-                      }`}
-                    >
-                      {student.rank}
-                    </div>
-                    <div className="flex-1">
-                      <p className="text-sm font-medium text-foreground">{student.name}</p>
-                    </div>
-                    <span className="text-sm font-bold text-accent">
-                      <AnimatedCounter value={student.score} />
-                    </span>
-                  </motion.div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        </motion.div>
-      </div>
+      <div className="grid lg:grid-cols-2 gap-6">
 
-      {/* Quick Actions */}
-      <motion.div variants={itemVariants}>
-        <Card className="border-0 shadow-card">
+        {/* CODING LEADERS */}
+
+        <Card className="shadow-card border-0">
           <CardHeader>
-            <CardTitle>Quick Actions</CardTitle>
+            <CardTitle className="flex items-center gap-2">
+              <Award className="text-yellow-500 w-5 h-5" />
+              Coding Leaders
+            </CardTitle>
           </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            {[
-  { label: 'Topics & Questions', icon: FileText, color: 'bg-info', path: '/admin/topics' },
-  { label: 'Create Event', icon: Calendar, color: 'bg-success', path: '/admin/events' },
-  { label: 'Career Tracks', icon: BookOpen, color: 'bg-warning', path: '/admin/career-tracks' },
-  { label: 'View Students', icon: Users, color: 'bg-accent', path: '/admin/students' },
-].map((action, i) => (
-  <motion.button
-    key={action.label}
-    whileHover={{ scale: 1.02 }}
-    whileTap={{ scale: 0.98 }}
-    onClick={() => navigate(action.path)}
-    className="flex flex-col items-center gap-3 p-4 rounded-xl border border-border hover:border-accent hover:shadow-md transition-all"
-  >
-    <div className={`w-12 h-12 rounded-xl ${action.color} flex items-center justify-center`}>
-      <action.icon className="w-6 h-6 text-card" />
-    </div>
-    <span className="text-sm font-medium text-foreground">
-      {action.label}
-    </span>
-  </motion.button>
-))}
 
-            </div>
+          <CardContent className="space-y-3">
+            {codingLeaders.map((student, index) => (
+              <div
+                key={student.studentId}
+                onClick={() =>
+                  navigate("/admin/leaderboard?tab=coding")
+                }
+                className="flex items-center justify-between p-3 rounded-lg cursor-pointer hover:bg-muted/50 transition"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-full bg-red-400 text-white flex items-center justify-center font-bold">
+                    {index + 1}
+                  </div>
+
+                 <p className="font-medium">{student.name}</p>
+                 </div>
+<p className="font-bold text-red-500">{student.points}</p>
+              </div>
+            ))}
           </CardContent>
         </Card>
-      </motion.div>
+
+        {/* APTITUDE LEADERS */}
+
+        <Card className="shadow-card border-0">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Brain className="text-purple-500 w-5 h-5" />
+              Aptitude Leaders
+            </CardTitle>
+          </CardHeader>
+
+          <CardContent className="space-y-3">
+            {aptitudeLeaders.map((student, index) => (
+              <div
+                key={student.studentId}
+                onClick={() =>
+                  navigate("/admin/leaderboard?tab=aptitude")
+                }
+                className="flex items-center justify-between p-3 rounded-lg cursor-pointer hover:bg-muted/50 transition"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-full bg-orange-400 text-white flex items-center justify-center font-bold">
+                    {index + 1}
+                  </div>
+
+                  <p className="font-medium">{student.name}</p>
+
+                </div>
+
+                <p className="font-bold text-orange-500">{student.points}</p>
+              </div>
+            ))}
+          </CardContent>
+        </Card>
+
+      </div>
+
+      {/* ================= QUICK ACTIONS ================= */}
+
+      <Card className="shadow-card border-0">
+        <CardHeader>
+          <CardTitle>Quick Actions</CardTitle>
+        </CardHeader>
+
+        <CardContent>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            {[
+              {
+                label: "Topics & Questions",
+                icon: FileText,
+                path: "/admin/topics",
+                color: "bg-info",
+              },
+              {
+                label: "Create Event",
+                icon: Calendar,
+                path: "/admin/events",
+                color: "bg-success",
+              },
+              {
+                label: "Career Tracks",
+                icon: BookOpen,
+                path: "/admin/career-tracks",
+                color: "bg-warning",
+              },
+              {
+                label: "Leaderboard",
+                icon: Award,
+                path: "/admin/leaderboard",
+                color: "bg-purple-500",
+              },
+            ].map((action) => (
+              <button
+                key={action.label}
+                onClick={() => navigate(action.path)}
+                className="flex flex-col items-center gap-3 p-4 rounded-xl border hover:border-accent hover:shadow-md transition"
+              >
+                <div
+                  className={`w-12 h-12 rounded-xl ${action.color} flex items-center justify-center`}
+                >
+                  <action.icon className="w-6 h-6 text-white" />
+                </div>
+
+                <span className="text-sm font-medium">
+                  {action.label}
+                </span>
+              </button>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
     </motion.div>
   );
 };
