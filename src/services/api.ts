@@ -164,38 +164,43 @@ export const adminService = {
     await api.post(`/api/admin/events/${eventId}/points`, { studentId, points });
   },
 
-  // Career Tracks
+  // ============ ADMIN SERVICES - CAREER TRACKS ============
   async getCareerTracks(): Promise<CareerTrack[]> {
-    const { data } = await api.get<CareerTrack[]>('/api/admin/career-tracks');
+    const { data } = await api.get<CareerTrack[]>('/api/career-tracks');
     return data;
   },
 
-  async createCareerTrack(track: Partial<CareerTrack>): Promise<CareerTrack> {
+  async createCareerTrack(track: { name: string; description: string }): Promise<CareerTrack> {
     const { data } = await api.post<CareerTrack>('/api/admin/career-tracks', track);
     return data;
   },
 
-  async updateCareerTrack(id: number, track: Partial<CareerTrack>): Promise<CareerTrack> {
-    const { data } = await api.put<CareerTrack>(`/api/admin/career-tracks/${id}`, track);
+  async updateCareerTrack(id: number, track: { name: string; description: string; active: boolean }): Promise<CareerTrack> {
+    const { data } = await api.put<CareerTrack>(`/api/admin/career-tracks/tracks/${id}`, track);
     return data;
   },
 
   async deleteCareerTrack(id: number): Promise<void> {
-    await api.delete(`/api/admin/career-tracks/${id}`);
+    await api.delete(`/api/admin/career-tracks/tracks/${id}`);
   },
 
   async getTrackResources(trackId: number): Promise<Resource[]> {
-    const { data } = await api.get<Resource[]>(`/api/admin/career-tracks/${trackId}/resources`);
+    const { data } = await api.get<Resource[]>(`/api/career-tracks/${trackId}`);
     return data;
   },
 
-  async addTrackResource(trackId: number, resource: Partial<Resource>): Promise<Resource> {
+  async addTrackResource(trackId: number, resource: any): Promise<Resource> {
     const { data } = await api.post<Resource>(`/api/admin/career-tracks/${trackId}/resources`, resource);
     return data;
   },
 
-  async deleteTrackResource(trackId: number, resourceId: number): Promise<void> {
-    await api.delete(`/api/admin/career-tracks/${trackId}/resources/${resourceId}`);
+  async updateTrackResource(resourceId: number, resource: any): Promise<Resource> {
+    const { data } = await api.put<Resource>(`/api/admin/career-tracks/resources/${resourceId}`, resource);
+    return data;
+  },
+
+  async deleteTrackResource(resourceId: number): Promise<void> {
+    await api.delete(`/api/admin/career-tracks/resources/${resourceId}`);
   },
 
   // Students

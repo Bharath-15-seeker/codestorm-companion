@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Calendar, Trophy, BookOpen } from "lucide-react";
+import { Calendar, Trophy, BookOpen, Loader2 } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 
 type EventStatus = "REGISTRATION_OPEN" | "REGISTRATION_CLOSED" | "COMPLETED";
@@ -14,6 +14,7 @@ type Event = {
   registrationCloseDate: string;
   status: EventStatus;
   type: EventType;
+  registered: boolean;
 };
 
 const Events = () => {
@@ -24,7 +25,13 @@ const Events = () => {
   const { toast } = useToast();
 
   useEffect(() => {
-    fetch("http://localhost:8081/api/events")
+    const token = localStorage.getItem("token");
+
+    fetch("http://localhost:8081/api/events", {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    })
       .then((res) => res.json())
       .then(setEvents)
       .catch(console.error);
@@ -39,44 +46,80 @@ const Events = () => {
     });
   }, [events, tab, typeFilter]);
 
-
   const registerEvent = async (eventId: number) => {
     try {
       setLoadingId(eventId);
-  
       const token = localStorage.getItem("token");
-  
+
       const res = await fetch(
         `http://localhost:8081/api/events/${eventId}/register`,
         {
           method: "POST",
           headers: {
-            "Authorization": `Bearer ${token}`,
-            "Content-Type": "application/json"
-          }
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
         }
       );
-  
+
       if (!res.ok) throw new Error("Failed");
-  
+
+      setEvents((prev) =>
+        prev.map((e) => (e.id === eventId ? { ...e, registered: true } : e))
+      );
+
       toast({
         title: "Registered!",
         description: "You have successfully registered for the event.",
       });
-  
     } catch (err) {
-      console.error(err);
-  
       toast({
         title: "Registration failed",
         description: "Please try again later.",
         variant: "destructive",
       });
-  
     } finally {
       setLoadingId(null);
     }
   };
+
+  const unregisterEvent = async (eventId: number) => {
+    try {
+      setLoadingId(eventId);
+      const token = localStorage.getItem("token");
+
+      const res = await fetch(
+        `http://localhost:8081/api/events/${eventId}/unregister`,
+        {
+          method: "DELETE",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      if (!res.ok) throw new Error("Failed to unregister");
+
+      setEvents((prev) =>
+        prev.map((e) => (e.id === eventId ? { ...e, registered: false } : e))
+      );
+
+      toast({
+        title: "Unregistered",
+        description: "You have successfully unregistered from the event.",
+      });
+    } catch (err) {
+      toast({
+        title: "Unregister failed",
+        description: "Could not cancel registration. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setLoadingId(null);
+    }
+  };
+
   const badgeClass = (status: EventStatus) =>
     status === "REGISTRATION_OPEN"
       ? "text-green-600 bg-green-100"
@@ -98,20 +141,20 @@ const Events = () => {
         <div className="flex gap-2">
           <button
             onClick={() => setTab("UPCOMING")}
-            className={`px-4 py-2 rounded-md text-sm font-medium ${
+            className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
               tab === "UPCOMING"
                 ? "bg-primary text-primary-foreground"
-                : "bg-muted text-muted-foreground"
+                : "bg-muted text-muted-foreground hover:bg-muted/80"
             }`}
           >
             Upcoming
           </button>
           <button
             onClick={() => setTab("COMPLETED")}
-            className={`px-4 py-2 rounded-md text-sm font-medium ${
+            className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
               tab === "COMPLETED"
                 ? "bg-primary text-primary-foreground"
-                : "bg-muted text-muted-foreground"
+                : "bg-muted text-muted-foreground hover:bg-muted/80"
             }`}
           >
             Completed
@@ -123,10 +166,10 @@ const Events = () => {
             <button
               key={t}
               onClick={() => setTypeFilter(t)}
-              className={`px-3 py-2 rounded-md text-sm ${
+              className={`px-3 py-2 rounded-md text-sm transition-colors ${
                 typeFilter === t
                   ? "bg-accent text-accent-foreground"
-                  : "bg-muted text-muted-foreground"
+                  : "bg-muted text-muted-foreground hover:bg-muted/80"
               }`}
             >
               {t}
@@ -138,7 +181,7 @@ const Events = () => {
       {/* Event Cards */}
       <div className="space-y-4">
         {filtered.map((event) => (
-          <Card key={event.id} className="rounded-2xl">
+          <Card key={event.id} className="rounded-2xl shadow-sm">
             <CardHeader className="flex flex-row justify-between items-start">
               <div>
                 <CardTitle>{event.name}</CardTitle>
@@ -159,8 +202,7 @@ const Events = () => {
               <div className="flex flex-wrap gap-4 text-sm text-muted-foreground">
                 <div className="flex items-center gap-1">
                   <Calendar className="w-4 h-4" />
-                  Reg: {event.registrationOpenDate} →{" "}
-                  {event.registrationCloseDate}
+                  Reg: {event.registrationOpenDate} → {event.registrationCloseDate}
                 </div>
                 <div className="flex items-center gap-1">
                   {event.type === "CODING" ? (
@@ -172,27 +214,59 @@ const Events = () => {
                 </div>
               </div>
 
-              {event.status === "REGISTRATION_OPEN" ? (
-                <button
-                  onClick={() => registerEvent(event.id)}
-                  disabled={loadingId === event.id}
-                  className="px-4 py-2 rounded-md bg-primary text-primary-foreground text-sm font-medium hover:opacity-90"
-                >
-                  {loadingId === event.id ? "Registering..." : "Register"}
-                </button>
-              ) : (
-                <button
-                  disabled
-                  className="px-4 py-2 rounded-md bg-muted text-muted-foreground text-sm cursor-not-allowed"
-                >
-                  {event.status === "COMPLETED"
-                    ? "Completed"
-                    : "Registration Closed"}
-                </button>
-              )}
+              <div className="flex gap-2">
+                {event.status === "REGISTRATION_OPEN" ? (
+                  event.registered ? (
+                    <button
+                      onClick={() => unregisterEvent(event.id)}
+                      disabled={loadingId === event.id}
+                      className="px-4 py-2 rounded-md bg-destructive/10 text-destructive border border-destructive/20 text-sm font-medium hover:bg-destructive hover:text-destructive-foreground transition-all flex items-center gap-2"
+                    >
+                      {loadingId === event.id ? (
+                        <>
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                          Processing...
+                        </>
+                      ) : (
+                        "Unregister"
+                      )}
+                    </button>
+                  ) : (
+                    <button
+                      onClick={() => registerEvent(event.id)}
+                      disabled={loadingId === event.id}
+                      className="px-4 py-2 rounded-md bg-primary text-primary-foreground text-sm font-medium hover:opacity-90 transition-opacity flex items-center gap-2"
+                    >
+                      {loadingId === event.id ? (
+                        <>
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                          Registering...
+                        </>
+                      ) : (
+                        "Register Now"
+                      )}
+                    </button>
+                  )
+                ) : (
+                  <button
+                    disabled
+                    className="px-4 py-2 rounded-md bg-muted text-muted-foreground text-sm cursor-not-allowed"
+                  >
+                    {event.status === "COMPLETED"
+                      ? "Completed"
+                      : "Registration Closed"}
+                  </button>
+                )}
+              </div>
             </CardContent>
           </Card>
         ))}
+
+        {filtered.length === 0 && (
+          <div className="text-center py-10 text-muted-foreground">
+            No events found for the selected category.
+          </div>
+        )}
       </div>
     </div>
   );

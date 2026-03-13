@@ -35,6 +35,7 @@ import Events from "./pages/student/Events";
 import AdminEventRegistrations from "./pages/admin/AdminEventRegistrations";
 import CareerTracksManagement from "./pages/admin/CareerTracksManagement";
 import AdminStudents from "./pages/admin/AdminStudents";
+import ForgotPasswordPage from './pages/ForgotPasswordPage';
 
 const queryClient = new QueryClient();
 
@@ -50,7 +51,7 @@ const App = () => (
             <Route path="/" element={<Index />} />
             <Route path="/login" element={<LoginPage />} />
             <Route path="/register" element={<RegisterPage />} />
-
+            <Route path="/forgot-password" element={<ForgotPasswordPage />} />
             {/* Admin Routes */}
  <Route
   path="/admin"
@@ -97,10 +98,10 @@ const App = () => (
   <Route path="career-tracks" element={<CareerTracks />} />
 <Route path="career-tracks/:id" element={<CareerResources />} />
 
+
 </Route>
 
-<Route path="/students/:id" element={<StudentProfile />} />
-
+     <Route path="/students/:id" element={<StudentProfile />} />
             {/* Catch-all */}
             <Route path="*" element={<NotFound />} />
           </Routes>
