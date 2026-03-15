@@ -14,7 +14,7 @@ const CareerTracks = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    fetch("http://localhost:8081/api/career-tracks")
+    fetch("https://demo-deployment-latest-dfxy.onrender.com/api/career-tracks")
       .then((res) => res.json())
       .then((data) => setTracks(data))
       .catch((err) => console.error("Failed to fetch tracks", err));

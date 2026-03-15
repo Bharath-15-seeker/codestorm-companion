@@ -27,7 +27,7 @@ const Events = () => {
   useEffect(() => {
     const token = localStorage.getItem("token");
 
-    fetch("http://localhost:8081/api/events", {
+    fetch("https://demo-deployment-latest-dfxy.onrender.com/api/events", {
       headers: {
         Authorization: `Bearer ${token}`,
       },

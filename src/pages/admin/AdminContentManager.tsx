@@ -58,13 +58,18 @@ const AdminContentManager = () => {
 
   /* ================= TOPIC ACTIONS ================= */
   const createTopic = async () => {
-    if (!newTopic) return;
-    const sheetId = sheet === "CODING" ? 1 : 2;
-    await api.post("/api/admin/topics", { sheetId, name: newTopic, orderIndex: topics.length + 1 });
-    toast({ title: "Topic created" });
-    setNewTopic("");
-    loadSheet();
-  };
+  if (!newTopic) return;
+
+  await api.post("/api/admin/topics", {
+    name: newTopic,
+    orderIndex: topics.length + 1,
+    sheetType: sheet
+  });
+
+  toast({ title: "Topic created" });
+  setNewTopic("");
+  loadSheet();
+};
 
   const updateTopic = async (topicId: number) => {
     await api.put(`/api/admin/topics/${topicId}`, { name: editTopicValue });

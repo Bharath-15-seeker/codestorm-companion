@@ -16,7 +16,7 @@ const CareerResources = () => {
   const [resources, setResources] = useState<CareerResource[]>([]);
 
   useEffect(() => {
-    fetch(`http://localhost:8081/api/career-tracks/${id}`)
+    fetch(`https://demo-deployment-latest-dfxy.onrender.com/api/career-tracks/${id}`)
       .then((res) => res.json())
       .then((data) =>
         setResources(

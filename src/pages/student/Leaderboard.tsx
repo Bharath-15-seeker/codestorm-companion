@@ -18,7 +18,7 @@ const Leaderboard = () => {
 
   useEffect(() => {
     setLoading(true);
-    fetch(`http://localhost:8081/api/leaderboard/${tab.toLowerCase()}`)
+    fetch(`https://demo-deployment-latest-dfxy.onrender.com/api/leaderboard/${tab.toLowerCase()}`)
       .then((res) => res.json())
       .then(setData)
       .catch(console.error)

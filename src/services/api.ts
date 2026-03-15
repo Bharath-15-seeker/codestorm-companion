@@ -18,7 +18,7 @@ import type {
 } from '@/types';
 
 // Base API configuration
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8081';
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://demo-deployment-latest-dfxy.onrender.com';
 
 const api = axios.create({
   baseURL: API_BASE_URL,
@@ -29,6 +29,7 @@ const api = axios.create({
 
 // Request interceptor for auth token
 api.interceptors.request.use((config) => {
+  // UNIFIED: Always use 'token'
   const token = localStorage.getItem('token');
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
@@ -40,8 +41,9 @@ api.interceptors.request.use((config) => {
 api.interceptors.response.use(
   (response) => response,
   (error) => {
+    // If the token is expired or invalid (401), clear everything and redirect
     if (error.response?.status === 401) {
-      localStorage.removeItem('authToken');
+      localStorage.removeItem('token'); 
       localStorage.removeItem('user');
       window.location.href = '/login';
     }
@@ -67,7 +69,8 @@ export const authService = {
   },
 
   logout() {
-    localStorage.removeItem('authToken');
+    // UNIFIED: Use 'token'
+    localStorage.removeItem('token');
     localStorage.removeItem('user');
   },
 };
@@ -164,7 +167,7 @@ export const adminService = {
     await api.post(`/api/admin/events/${eventId}/points`, { studentId, points });
   },
 
-  // ============ ADMIN SERVICES - CAREER TRACKS ============
+  // Career Tracks
   async getCareerTracks(): Promise<CareerTrack[]> {
     const { data } = await api.get<CareerTrack[]>('/api/career-tracks');
     return data;
@@ -203,7 +206,6 @@ export const adminService = {
     await api.delete(`/api/admin/career-tracks/resources/${resourceId}`);
   },
 
-  // Students
   async deleteStudent(id: number): Promise<void> {
     await api.delete(`/api/admin/students/${id}`);
   },
@@ -211,7 +213,6 @@ export const adminService = {
 
 // ============ STUDENT SERVICES ============
 export const studentService = {
-  // Sheets
   async getCodingSheet(): Promise<Sheet> {
     const { data } = await api.get<Sheet>('/api/sheets/coding');
     return data;
@@ -222,33 +223,29 @@ export const studentService = {
     return data;
   },
 
-  // Progress
-async getCodingProgress(userId: number) {
-  const { data } = await api.get(`/api/progress/coding?userId=${userId}`);
-  return data;
-},
+  async getCodingProgress(userId: number) {
+    const { data } = await api.get(`/api/progress/coding?userId=${userId}`);
+    return data;
+  },
 
-async getAptitudeProgress(userId: number) {
-  const { data } = await api.get(`/api/progress/aptitude?userId=${userId}`);
-  return data;
-},
+  async getAptitudeProgress(userId: number) {
+    const { data } = await api.get(`/api/progress/aptitude?userId=${userId}`);
+    return data;
+  },
 
-  // Progress
   async updateQuestionProgress(questionId: number, solved: boolean): Promise<Progress> {
     const { data } = await api.post<Progress>(
       '/api/progress/question',
-      { questionId, solved }   // ✅ CORRECT FIELD
+      { questionId, solved }
     );
     return data;
   },
-  
 
   async getMyProgress(): Promise<StudentProgress> {
     const { data } = await api.get<StudentProgress>('/api/progress/my');
     return data;
   },
 
-  // Leaderboard
   async getCodingLeaderboard(): Promise<LeaderboardEntry[]> {
     const { data } = await api.get<LeaderboardEntry[]>('/api/leaderboard/coding');
     return data;
@@ -259,7 +256,6 @@ async getAptitudeProgress(userId: number) {
     return data;
   },
 
-  // Events
   async getEvents(): Promise<Event[]> {
     const { data } = await api.get<Event[]>('/api/events');
     return data;
@@ -269,7 +265,6 @@ async getAptitudeProgress(userId: number) {
     await api.post(`/api/events/${eventId}/register`);
   },
 
-  // Career Tracks
   async getCareerTracks(): Promise<CareerTrack[]> {
     const { data } = await api.get<CareerTrack[]>('/api/career-tracks');
     return data;
