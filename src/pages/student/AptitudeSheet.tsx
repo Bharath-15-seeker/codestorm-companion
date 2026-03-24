@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import axios from "axios";
 import { studentService } from "@/services/api";
 
 import {
@@ -41,6 +42,8 @@ interface AptitudeTopic {
   subTopics: AptitudeSubTopic[];
 }
 
+const USER_ID = 13;
+
 const difficultyVariant = (difficulty: string) => {
   switch (difficulty) {
     case "EASY":
@@ -65,10 +68,10 @@ const AptitudeSheet = () => {
 
   /* ================= FETCH PROGRESS ================= */
 
-  const fetchProgress = async () => {
-    const res = await studentService.getAptitudeProgress();
-    setProgress(res);
-  };
+const fetchProgress = async () => {
+  const res = await studentService.getAptitudeProgress();
+  setProgress(res);
+};
 
   /* ================= FETCH SHEET ================= */
 
@@ -189,31 +192,52 @@ const AptitudeSheet = () => {
 
   return (
     <div className="p-6 space-y-6">
+
+      {/* HEADER + PROGRESS */}
       <div className="flex justify-between items-center">
         <h1 className="text-2xl font-bold">Aptitude Cheat Sheet</h1>
 
         <div className="w-60 space-y-2">
-          <Progress value={progress.progressPercentage} />
+          <Progress
+            value={progress.progressPercentage}
+            className="transition-all duration-700"
+          />
           <div className="text-sm text-right text-muted-foreground">
             {progress.solvedQuestions}/{progress.totalQuestions}
           </div>
         </div>
       </div>
 
+      {/* TOPICS */}
       <Accordion type="multiple" className="space-y-4">
         {topics.map((topic) => (
-          <AccordionItem key={topic.id} value={`topic-${topic.id}`}>
-            <AccordionTrigger>{topic.name}</AccordionTrigger>
+          <AccordionItem
+            key={topic.id}
+            value={`topic-${topic.id}`}
+            className="border rounded-xl px-4"
+          >
+            <AccordionTrigger className="text-lg font-semibold">
+              {topic.name}
+            </AccordionTrigger>
 
             <AccordionContent>
               {topic.subTopics.map((sub) => (
-                <div key={sub.id}>
-                  <h3>{sub.name}</h3>
+                <div key={sub.id} className="mb-6">
+                  <h3 className="font-semibold mb-3">{sub.name}</h3>
 
                   {sub.questions.map((q) => (
-                    <div key={q.id}>
-                      <p>{q.question}</p>
+                    <div
+                      key={q.id}
+                      className="border rounded-lg p-4 mb-4 space-y-3 transition-all duration-500"
+                    >
+                      <div className="flex justify-between items-center">
+                        <p className="font-medium">{q.question}</p>
+                        <Badge variant={difficultyVariant(q.difficulty)}>
+                          {q.difficulty}
+                        </Badge>
+                      </div>
 
+                      {/* OPTIONS */}
                       {["A", "B", "C", "D"].map((opt) => (
                         <div
                           key={opt}
@@ -221,16 +245,28 @@ const AptitudeSheet = () => {
                             !q.showResult &&
                             handleOptionClick(q.id, opt, q.correctOption)
                           }
-                          className={cn(getOptionStyle(q, opt))}
+                          className={cn(
+                            "border p-2 rounded-md transition-all duration-300",
+                            getOptionStyle(q, opt)
+                          )}
                         >
                           {opt}. {q[`option${opt}` as keyof AptitudeQuestion]}
                         </div>
                       ))}
 
+                      {/* RESULT + RETRY */}
                       {q.showResult && (
-                        <div>
-                          Correct Answer: {q.correctOption}
-                          <Button onClick={() => handleRetry(q.id)}>
+                        <div className="space-y-3 animate-in fade-in duration-500">
+
+                          <div className="text-sm font-medium">
+                            Correct Answer: {q.correctOption}
+                          </div>
+
+                          <Button
+                            size="sm"
+                            className="bg-blue-500 hover:bg-blue-600 text-white transition-all duration-300"
+                            onClick={() => handleRetry(q.id)}
+                          >
                             Retry
                           </Button>
                         </div>
