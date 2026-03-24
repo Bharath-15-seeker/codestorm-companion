@@ -241,7 +241,7 @@ const AptitudeSheet = () => {
   const pct = progress.progressPercentage;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-indigo-50/30 pb-20">
+   <div className="min-h-screen flex flex-col bg-gradient-to-br from-slate-50 via-white to-indigo-50/30">
 
       {/* ── TOP HEADER BAR ── */}
       <div className="sticky top-0 z-20 bg-white/80 backdrop-blur-md border-b border-slate-100 shadow-sm">
@@ -300,7 +300,7 @@ const AptitudeSheet = () => {
       </div>
 
       {/* ── MAIN CONTENT ── */}
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 pt-8 space-y-4">
+      <div className="max-w-4xl w-full mx-auto px-4 sm:px-6 pt-8 pb-20 space-y-4 flex-1">
 
         {/* Mobile progress card */}
         <div className="sm:hidden bg-white rounded-2xl border border-slate-100 shadow-sm p-4 flex items-center gap-4">
