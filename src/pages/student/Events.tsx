@@ -52,7 +52,7 @@ const Events = () => {
       const token = localStorage.getItem("token");
 
       const res = await fetch(
-        `http://localhost:8081/api/events/${eventId}/register`,
+        `https://demo-deployment-latest-dfxy.onrender.com/api/events/${eventId}/register`,
         {
           method: "POST",
           headers: {
@@ -89,7 +89,7 @@ const Events = () => {
       const token = localStorage.getItem("token");
 
       const res = await fetch(
-        `http://localhost:8081/api/events/${eventId}/unregister`,
+        `https://demo-deployment-latest-dfxy.onrender.com/api/events/${eventId}/unregister`,
         {
           method: "DELETE",
           headers: {
