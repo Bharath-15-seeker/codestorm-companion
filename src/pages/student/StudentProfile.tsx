@@ -49,7 +49,7 @@ const StudentProfile = () => {
     const fetchProfile = async () => {
       try {
         const res = await axios.get(
-          `http://localhost:8081/api/profile/${profileId}`
+          `https://demo-deployment-latest-dfxy.onrender.com/api/profile/${profileId}`
         );
         setProfile(res.data);
         setFormData(res.data);
