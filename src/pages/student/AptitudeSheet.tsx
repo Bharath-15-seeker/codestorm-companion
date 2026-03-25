@@ -224,7 +224,7 @@ const AptitudeSheet = () => {
   /* ================= LOADING ================= */
   if (loading)
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center gap-4 bg-slate-50">
+      <div className="h-screen flex flex-col items-center justify-center gap-4 bg-slate-50">
         <div className="flex gap-1.5">
           {[0, 1, 2].map((i) => (
             <span
@@ -241,7 +241,7 @@ const AptitudeSheet = () => {
   const pct = progress.progressPercentage;
 
   return (
-   <div className="min-h-screen flex flex-col bg-gradient-to-br from-slate-50 via-white to-indigo-50/30">
+   <div className="h-screen flex flex-col bg-gradient-to-br from-slate-50 via-white to-indigo-50/30">
 
       {/* ── TOP HEADER BAR ── */}
       <div className="sticky top-0 z-20 bg-white/80 backdrop-blur-md border-b border-slate-100 shadow-sm">
