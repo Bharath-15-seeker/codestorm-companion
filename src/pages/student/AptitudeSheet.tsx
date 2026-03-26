@@ -414,228 +414,171 @@ const AptitudeSheet = () => {
         </div>
 
         {/* ══ TOPICS ACCORDION ══ */}
-        <Accordion type="multiple" className="space-y-3">
-          {topics.map((topic, topicIdx) => {
-            const totalQ = topic.subTopics.reduce((a, s) => a + s.questions.length, 0);
-            const solvedQ = topic.subTopics.reduce(
-              (a, s) => a + s.questions.filter((q) => q.solved).length,
-              0
-            );
-            const topicPct = totalQ ? Math.round((solvedQ / totalQ) * 100) : 0;
+       {/* ══ TOPICS ACCORDION ══ */}
+<Accordion type="multiple" className="space-y-3">
+  {topics.map((topic, topicIdx) => {
+    const totalQ = topic.subTopics.reduce((a, s) => a + s.questions.length, 0);
+    const solvedQ = topic.subTopics.reduce(
+      (a, s) => a + s.questions.filter((q) => q.solved).length,
+      0
+    );
+    const topicPct = totalQ ? Math.round((solvedQ / totalQ) * 100) : 0;
 
-            return (
-              <AccordionItem
-                key={topic.id}
-                value={`topic-${topic.id}`}
-                className={cn(
-                  "bg-white border rounded-2xl overflow-hidden transition-all duration-300",
-                  "border-slate-200/80 shadow-sm",
-                  "data-[state=open]:shadow-lg data-[state=open]:shadow-indigo-100/50",
-                  "data-[state=open]:border-indigo-200/70",
-                  "hover:shadow-md hover:shadow-slate-100 hover:border-slate-300/80"
-                )}
-              >
-                <AccordionTrigger className="px-5 py-4 hover:no-underline hover:bg-slate-50/60 transition-colors duration-200 group [&>svg]:hidden">
-                  <div className="flex items-center justify-between w-full gap-3">
-                    {/* Number + Name */}
-                    <div className="flex items-center gap-3 min-w-0">
-                      <span className={cn(
-                        "w-8 h-8 rounded-xl text-sm font-bold flex items-center justify-center flex-shrink-0 transition-all duration-200",
-                        "bg-indigo-50 text-indigo-600",
-                        "group-data-[state=open]:bg-gradient-to-br group-data-[state=open]:from-indigo-500 group-data-[state=open]:to-violet-600 group-data-[state=open]:text-white group-data-[state=open]:shadow-md group-data-[state=open]:shadow-indigo-200/60"
-                      )}>
-                        {topicIdx + 1}
-                      </span>
-                      <span className="text-[15px] font-semibold text-slate-800 text-left leading-tight truncate">
-                        {topic.name}
-                      </span>
-                    </div>
+    return (
+      <AccordionItem
+        key={topic.id}
+        value={`topic-${topic.id}`}
+        className="bg-white border rounded-2xl overflow-hidden"
+      >
+        {/* 🔹 TOPIC HEADER */}
+        <AccordionTrigger className="px-5 py-4 hover:no-underline group [&>svg]:hidden">
+          <div className="flex items-center justify-between w-full gap-3">
+            <div className="flex items-center gap-3">
+              <span className="w-8 h-8 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center font-bold">
+                {topicIdx + 1}
+              </span>
+              <span className="font-semibold text-slate-800">
+                {topic.name}
+              </span>
+            </div>
 
-                    {/* Stats + chevron */}
-                    <div className="flex items-center gap-3 flex-shrink-0">
-                      {/* Solved badge */}
-                      <span className={cn(
-                        "hidden sm:inline-flex text-xs font-semibold px-2.5 py-0.5 rounded-full",
-                        topicPct === 100
-                          ? "bg-emerald-100 text-emerald-700"
-                          : topicPct > 0
-                          ? "bg-indigo-50 text-indigo-600"
-                          : "bg-slate-100 text-slate-500"
-                      )}>
-                        {solvedQ}/{totalQ}
-                      </span>
-                      {/* Mini bar */}
-                      <div className="hidden sm:block w-20 h-1.5 rounded-full bg-slate-100 overflow-hidden">
-                        <div
-                          className={cn(
-                            "h-full rounded-full transition-all duration-600",
-                            topicPct === 100 ? "bg-gradient-to-r from-emerald-400 to-emerald-500" : "bg-gradient-to-r from-indigo-400 to-violet-500"
-                          )}
-                          style={{ width: `${topicPct}%` }}
-                        />
-                      </div>
-                      <ChevronDown />
-                    </div>
+            <div className="flex items-center gap-3">
+              <span className="text-xs text-slate-500">
+                {solvedQ}/{totalQ}
+              </span>
+              <ChevronDown />
+            </div>
+          </div>
+        </AccordionTrigger>
+
+        {/* 🔹 TOPIC CONTENT → SUBTOPICS */}
+        <AccordionContent className="px-5 pb-5">
+
+          {/* ✅ NEW: SUBTOPIC ACCORDION */}
+          <Accordion type="multiple" className="space-y-4">
+
+            {topic.subTopics.map((sub) => (
+              <AccordionItem key={sub.id} value={`sub-${sub.id}`} className="border-none">
+
+                {/* 🔹 SUBTOPIC HEADER */}
+                <AccordionTrigger className="hover:no-underline px-0 py-2 group [&>svg]:hidden">
+                  <div className="flex items-center gap-2.5 w-full">
+
+                    <div className="w-1.5 h-5 rounded-full bg-gradient-to-b from-indigo-400 to-violet-500" />
+
+                    <h3 className="text-xs font-bold text-slate-500 uppercase tracking-[0.12em]">
+                      {sub.name}
+                    </h3>
+
+                    <div className="flex-1 h-px bg-gradient-to-r from-slate-200 to-transparent" />
+
+                    <span className="text-[11px] text-slate-400">
+                      {sub.questions.filter((q) => q.solved).length}/{sub.questions.length}
+                    </span>
+
+                    {sub.youtubeLink && (
+                      <WatchVideoButton link={sub.youtubeLink} />
+                    )}
+
+                    <ChevronDown />
                   </div>
                 </AccordionTrigger>
 
-                <AccordionContent className="px-5 pb-5">
-                  <div className="space-y-7 pt-2">
-                    {topic.subTopics.map((sub) => (
-                      <div key={sub.id}>
+                {/* 🔹 QUESTIONS (ONLY ON SUBTOPIC CLICK) */}
+                <AccordionContent className="pt-3 space-y-3">
 
-                        {/* ── SubTopic Header ── */}
-                        <div className="flex items-center gap-2.5 mb-3.5">
-                          <div className="w-1.5 h-5 rounded-full bg-gradient-to-b from-indigo-400 to-violet-500 flex-shrink-0" />
-                          <h3 className="text-xs font-bold text-slate-500 uppercase tracking-[0.12em] truncate">
-                            {sub.name}
-                          </h3>
-                          <div className="flex-1 h-px bg-gradient-to-r from-slate-200 to-transparent" />
+                  {sub.questions.map((q, qIdx) => {
+                    const diff = difficultyConfig(q.difficulty);
 
-                          {/* Solved count */}
-                          <span className="text-[11px] font-semibold text-slate-400 flex-shrink-0">
-                            {sub.questions.filter((q) => q.solved).length}/{sub.questions.length}
+                    return (
+                      <div
+                        key={q.id}
+                        className={cn(
+                          "rounded-xl border p-4 space-y-3",
+                          q.solved
+                            ? "border-emerald-200 bg-emerald-50"
+                            : q.showResult
+                            ? "border-rose-200 bg-rose-50"
+                            : "border-slate-200 bg-white"
+                        )}
+                      >
+                        {/* Question */}
+                        <div className="flex justify-between">
+                          <p className="text-sm font-medium">
+                            {qIdx + 1}. {q.question}
+                          </p>
+
+                          <span className={cn("text-xs px-2 py-1 rounded", diff.pill)}>
+                            {diff.label}
                           </span>
-
-                          {/* ✅ YouTube / Watch Video Button */}
-                          {sub.youtubeLink && (
-                            <WatchVideoButton link={sub.youtubeLink} />
-                          )}
                         </div>
 
-                        {/* ── Questions ── */}
-                        <div className="space-y-3">
-                          {sub.questions.map((q, qIdx) => {
-                            const diff = difficultyConfig(q.difficulty);
+                        {/* Options */}
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                          {["A", "B", "C", "D"].map((opt) => {
+                            const isCorrect = q.showResult && opt === q.correctOption;
+                            const isWrong =
+                              q.showResult &&
+                              opt === q.selectedOption &&
+                              opt !== q.correctOption;
 
                             return (
                               <div
-                                key={q.id}
+                                key={opt}
+                                onClick={() =>
+                                  !q.showResult &&
+                                  handleOptionClick(q.id, opt, q.correctOption)
+                                }
                                 className={cn(
-                                  "rounded-xl border p-4 space-y-3.5 transition-all duration-300",
-                                  q.solved
-                                    ? "border-emerald-200/80 bg-gradient-to-br from-emerald-50/60 to-white shadow-sm shadow-emerald-100/40"
-                                    : q.showResult
-                                    ? "border-rose-200/80 bg-gradient-to-br from-rose-50/50 to-white shadow-sm shadow-rose-100/30"
-                                    : "border-slate-200 bg-white hover:border-indigo-200/60 hover:shadow-sm hover:shadow-indigo-100/30"
+                                  "border rounded-lg px-3 py-2 cursor-pointer",
+                                  getOptionStyle(q, opt)
                                 )}
                               >
-                                {/* Question header */}
-                                <div className="flex items-start justify-between gap-3">
-                                  <div className="flex items-start gap-2.5 min-w-0">
-                                    <span
-                                      className={cn(
-                                        "mt-0.5 w-5 h-5 rounded-full flex-shrink-0 flex items-center justify-center text-[10px] font-bold transition-all duration-300",
-                                        q.solved
-                                          ? "bg-emerald-500 text-white shadow-sm shadow-emerald-200"
-                                          : "bg-slate-100 text-slate-400"
-                                      )}
-                                    >
-                                      {q.solved ? "✓" : qIdx + 1}
-                                    </span>
-                                    <p className="text-[13.5px] font-medium text-slate-800 leading-relaxed">
-                                      {q.question}
-                                    </p>
-                                  </div>
-                                  <span
-                                    className={cn(
-                                      "flex-shrink-0 text-[11px] font-bold px-2.5 py-1 rounded-full",
-                                      diff.pill
-                                    )}
-                                  >
-                                    {diff.label}
-                                  </span>
-                                </div>
+                                <span className="font-semibold mr-2">{opt}.</span>
+                                {q[`option${opt}` as keyof AptitudeQuestion]}
 
-                                {/* Options grid */}
-                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                                  {["A", "B", "C", "D"].map((opt) => {
-                                    const isCorrect = q.showResult && opt === q.correctOption;
-                                    const isWrong =
-                                      q.showResult &&
-                                      opt === q.selectedOption &&
-                                      opt !== q.correctOption;
-
-                                    return (
-                                      <div
-                                        key={opt}
-                                        onClick={() =>
-                                          !q.showResult &&
-                                          handleOptionClick(q.id, opt, q.correctOption)
-                                        }
-                                        className={cn(
-                                          "flex items-center gap-2.5 border rounded-xl px-3 py-2.5 text-[13px] transition-all duration-200 select-none",
-                                          getOptionStyle(q, opt)
-                                        )}
-                                      >
-                                        <span
-                                          className={cn(
-                                            "w-6 h-6 rounded-lg flex-shrink-0 flex items-center justify-center text-[11px] font-bold transition-all duration-200",
-                                            isCorrect
-                                              ? "bg-emerald-500 text-white shadow-sm"
-                                              : isWrong
-                                              ? "bg-rose-500 text-white shadow-sm"
-                                              : "bg-slate-100 text-slate-500"
-                                          )}
-                                        >
-                                          {opt}
-                                        </span>
-                                        <span className="leading-snug flex-1 text-slate-700">
-                                          {q[`option${opt}` as keyof AptitudeQuestion]}
-                                        </span>
-                                        {isCorrect && <span className="flex-shrink-0"><CheckIcon /></span>}
-                                        {isWrong && <span className="flex-shrink-0"><XIcon /></span>}
-                                      </div>
-                                    );
-                                  })}
-                                </div>
-
-                                {/* Result + Retry row */}
-                                {q.showResult && (
-                                  <div className="flex items-center justify-between pt-0.5 animate-in fade-in slide-in-from-bottom-2 duration-300">
-                                    <div
-                                      className={cn(
-                                        "flex items-center gap-2 text-[12.5px] font-semibold px-3 py-1.5 rounded-lg",
-                                        q.solved
-                                          ? "bg-emerald-100/80 text-emerald-700"
-                                          : "bg-rose-100/80 text-rose-700"
-                                      )}
-                                    >
-                                      {q.solved ? (
-                                        <><CheckIcon /> Correct! Well done</>
-                                      ) : (
-                                        <><XIcon /> Answer: <strong>{q.correctOption}</strong></>
-                                      )}
-                                    </div>
-
-                                    <button
-                                      onClick={() => handleRetry(q.id)}
-                                      className={cn(
-                                        "flex items-center gap-1.5 text-xs font-semibold",
-                                        "text-slate-500 hover:text-indigo-600",
-                                        "bg-white hover:bg-indigo-50",
-                                        "px-3 py-1.5 rounded-lg border border-slate-200 hover:border-indigo-200",
-                                        "transition-all duration-200 active:scale-95"
-                                      )}
-                                    >
-                                      <RetryIcon />
-                                      Try Again
-                                    </button>
-                                  </div>
-                                )}
+                                {isCorrect && " ✅"}
+                                {isWrong && " ❌"}
                               </div>
                             );
                           })}
                         </div>
+
+                        {/* Result */}
+                        {q.showResult && (
+                          <div className="flex justify-between items-center mt-2">
+                            <span
+                              className={cn(
+                                "text-sm font-semibold",
+                                q.solved ? "text-green-600" : "text-red-600"
+                              )}
+                            >
+                              {q.solved
+                                ? "Correct!"
+                                : `Answer: ${q.correctOption}`}
+                            </span>
+
+                            <button
+                              onClick={() => handleRetry(q.id)}
+                              className="text-xs text-blue-600"
+                            >
+                              Retry
+                            </button>
+                          </div>
+                        )}
                       </div>
-                    ))}
-                  </div>
+                    );
+                  })}
+
                 </AccordionContent>
               </AccordionItem>
-            );
-          })}
-        </Accordion>
-
+            ))}
+          </Accordion>
+        </AccordionContent>
+      </AccordionItem>
+    );
+  })}
+</Accordion>
         {/* ══ EMPTY STATE ══ */}
         {topics.length === 0 && (
           <div className="flex flex-col items-center justify-center py-28 text-center">
