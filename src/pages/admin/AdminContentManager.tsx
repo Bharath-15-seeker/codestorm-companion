@@ -75,14 +75,22 @@ const AdminContentManager = () => {
   // ── NEW: per-topic subtopic form state (replaces plain string input for Aptitude) ──
   const [subtopicForms, setSubtopicForms] = useState<Record<number, SubtopicFormState>>({});
 
+  const [editSubForm, setEditSubForm] = useState({
+  name: "",
+  youtubeLink: "",
+});
+
   const getSubtopicForm = (topicId: number): SubtopicFormState =>
     subtopicForms[topicId] ?? defaultSubtopicForm();
 
   const setSubtopicForm = (topicId: number, patch: Partial<SubtopicFormState>) =>
-    setSubtopicForms((prev) => ({
-      ...prev,
-      [topicId]: { ...getSubtopicForm(topicId), ...patch },
-    }));
+  setSubtopicForms((prev) => ({
+    ...prev,
+    [topicId]: {
+      ...(prev[topicId] ?? defaultSubtopicForm()),
+      ...patch,
+    },
+  }));
 
   /* ================= LOAD DATA ================= */
   const loadSheet = async () => {
@@ -164,11 +172,15 @@ const AdminContentManager = () => {
     }
   };
 
-  const updateSubtopic = async (subId: number) => {
-    await api.put(`/api/admin/subtopics/${subId}`, { name: editSubValue });
-    setEditingSubId(null);
-    loadSheet();
-  };
+ const updateSubtopic = async (subId: number) => {
+  await api.put(`/api/admin/subtopics/${subId}`, {
+    name: editSubForm.name,
+    youtubeLink: editSubForm.youtubeLink,
+  });
+
+  setEditingSubId(null);
+  loadSheet();
+};
 
   const deleteSubtopic = async (subId: number) => {
     if (!confirm("Delete subtopic?")) return;
@@ -513,29 +525,49 @@ const AdminContentManager = () => {
                     className="border rounded-md px-3 bg-background"
                   >
                     <div className="flex items-center gap-2">
-                      {editingSubId === sub.id ? (
-                        <div className="flex items-center gap-2 py-2 flex-1">
-                          <Input
-                            value={editSubValue}
-                            onChange={(e) => setEditSubValue(e.target.value)}
-                            className="h-8"
-                          />
-                          <Button
-                            size="sm"
-                            className="bg-green-600 hover:bg-green-700"
-                            onClick={() => updateSubtopic(sub.id)}
-                          >
-                            <Check className="w-3 h-3" />
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => setEditingSubId(null)}
-                          >
-                            <X className="w-3 h-3" />
-                          </Button>
-                        </div>
-                      ) : (
+                    {editingSubId === sub.id ? (
+  <div className="flex flex-col gap-2 py-2 flex-1">
+
+    {/* Subtopic Name */}
+    <Input
+      value={editSubForm.name}
+      onChange={(e) =>
+        setEditSubForm((prev) => ({ ...prev, name: e.target.value }))
+      }
+      className="h-8"
+      placeholder="Subtopic name"
+    />
+
+    {/* YouTube Link */}
+    <Input
+      value={editSubForm.youtubeLink}
+      onChange={(e) =>
+        setEditSubForm((prev) => ({ ...prev, youtubeLink: e.target.value }))
+      }
+      className="h-8"
+      placeholder="YouTube link (optional)"
+    />
+
+    {/* Buttons */}
+    <div className="flex gap-2">
+      <Button
+        size="sm"
+        className="bg-green-600 hover:bg-green-700"
+        onClick={() => updateSubtopic(sub.id)}
+      >
+        <Check className="w-3 h-3" />
+      </Button>
+
+      <Button
+        size="sm"
+        variant="outline"
+        onClick={() => setEditingSubId(null)}
+      >
+        <X className="w-3 h-3" />
+      </Button>
+    </div>
+  </div>
+) : (
                         <>
                           <AccordionTrigger className="text-md font-medium py-3 flex-1">
                             <span className="flex items-center gap-2">
@@ -563,7 +595,10 @@ const AdminContentManager = () => {
                               onClick={(e) => {
                                 e.stopPropagation();
                                 setEditingSubId(sub.id);
-                                setEditSubValue(sub.name);
+                                setEditSubForm({
+  name: sub.name,
+  youtubeLink: sub.youtubeLink || "",
+});
                               }}
                             >
                               <Pencil className="w-3.5 h-3.5" />
