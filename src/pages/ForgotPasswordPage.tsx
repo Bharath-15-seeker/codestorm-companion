@@ -21,7 +21,7 @@ const ForgotPasswordPage = () => {
     e.preventDefault();
     setIsLoading(true);
     try {
-      const res = await fetch("http://localhost:8081/auth/password/forgot", {
+      const res = await fetch("https://demo-deployment-latest-dfxy.onrender.com/auth/password/forgot", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email }),
@@ -50,7 +50,7 @@ const ForgotPasswordPage = () => {
     e.preventDefault();
     setIsLoading(true);
     try {
-      const res = await fetch("http://localhost:8081/auth/password/reset", {
+      const res = await fetch("https://demo-deployment-latest-dfxy.onrender.com/auth/password/reset", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, otp, newPassword }),
