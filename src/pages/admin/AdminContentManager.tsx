@@ -127,10 +127,17 @@ const AdminContentManager = () => {
   };
 
   const deleteTopic = async (topicId: number) => {
-    if (!confirm("Delete topic and all nested content?")) return;
+  if (!confirm("Delete topic and all nested content?")) return;
+
+  try {
     await api.delete(`/api/admin/topics/${topicId}`);
+    toast({ title: "Deleted successfully" });
     loadSheet();
-  };
+  } catch (error) {
+    console.error(error);
+    toast({ title: "Delete failed", variant: "destructive" });
+  }
+};
 
   /* ================= SUBTOPIC ACTIONS ================= */
 
